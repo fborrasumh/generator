@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CursoGen — Generador de Asignaturas IA</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#2563eb;--accent-dim:#1d4ed8;
+  --teal:#059669;--teal-dim:#047857;
+  --violet:#7c3aed;
+  --amber:#d97706;--red:#dc2626;--green:#16a34a;
+  --surface:#f7f8fa;--s2:#ffffff;--s3:#f3f4f6;
+  --border:#e5e7eb;--bhi:#d1d5db;
+  --text:#111827;--t2:#4b5563;--t3:#9ca3af;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+  --ff:'DM Sans',system-ui,sans-serif;
+  --serif:'DM Serif Display',Georgia,serif;
+  --r:8px;--rl:12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--ff);background:var(--surface);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.app{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:258px;flex-shrink:0;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.logo-row{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--violet));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.logo h1{font-family:var(--serif);font-size:17px;color:var(--text);font-weight:400}
+.logo span{font-size:10px;color:var(--t3);letter-spacing:.08em;text-transform:uppercase}
+.snav{padding:16px 18px 6px;font-size:10px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;font-weight:500}
+.ni-item{display:flex;align-items:center;gap:9px;padding:8px 18px;font-size:13px;color:var(--t2);cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.ni-item:hover{background:#f3f4f6;color:var(--text)}
+.ni-item.active{background:#eff6ff;color:var(--accent);border-left-color:var(--accent)}
+.ni-item .ni{font-size:14px;width:17px;text-align:center}
+.sidebar-footer{margin-top:auto;padding:14px 18px;border-top:1px solid var(--border);background:#fafafa}
+.user-row{display:flex;align-items:center;gap:9px}
+.avatar{width:30px;height:30px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--accent);border:1px solid #bfdbfe}
+.un{font-size:13px;color:var(--text);font-weight:500}.up{font-size:11px;color:var(--t3)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:13px 28px;border-bottom:1px solid var(--border);background:#ffffff;position:sticky;top:0;z-index:20;gap:12px;box-shadow:0 1px 0 var(--border)}
+.topbar h2{font-family:var(--serif);font-size:18px;font-weight:400;color:var(--text);white-space:nowrap}
+.topbar p{font-size:11px;color:var(--t3);margin-top:1px}
+.topbar-actions{display:flex;gap:8px;flex-shrink:0}
+
+/* BUTTONS */
+button{font-family:var(--ff);cursor:pointer;border:none;transition:all .15s}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:13px;border-radius:var(--r);border:1px solid var(--bhi);background:transparent;color:var(--t2)}
+.btn:hover{background:#f3f4f6;color:var(--text)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--violet));border-color:var(--accent);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--accent-dim)}
+.btn-danger{border-color:rgba(220,38,38,.4);color:var(--red)}
+.btn-danger:hover{background:rgba(220,38,38,.1)}
+.btn-success{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn-success:hover:not(:disabled){background:var(--teal-dim)}
+.btn-stop{background:transparent;border:1px solid rgba(220,38,38,.5);color:var(--red)}
+.btn-stop:hover:not(:disabled){background:rgba(220,38,38,.08);border-color:var(--red)}
+.btn-stop:disabled{opacity:.35;cursor:not-allowed}
+.btn-amber{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);color:var(--amber)}
+.btn-violet{background:linear-gradient(135deg,#7c3aed,#6d28d9);border-color:#7c3aed;color:#fff}
+.btn-violet:hover:not(:disabled){background:#6d28d9}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border);padding:0 28px;background:#ffffff;overflow-x:auto;flex-shrink:0}
+.tab{padding:11px 14px;font-size:13px;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:5px;margin-bottom:-1px;position:relative}
+.tab:hover{color:var(--text)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-badge{position:absolute;top:6px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--teal)}
+.tc{display:none}.tc.active{display:block}
+.content{padding:24px 28px;flex:1;overflow-y:auto;max-height:calc(100vh - 112px)}
+
+/* WIZARD */
+.wizard-steps{display:flex;gap:0;margin-bottom:28px;border-radius:var(--r);overflow:hidden;border:1px solid var(--border);background:#f3f4f6}
+.wstep{flex:1;padding:10px 4px;text-align:center;font-size:11px;color:var(--t3);background:#f7f8fa;border-right:1px solid var(--border);cursor:pointer;transition:all .2s;position:relative}
+.wstep:last-child{border-right:none}
+.wstep.active{background:#eff6ff;color:var(--accent)}
+.wstep.done{background:#f0fdf4;color:var(--teal)}
+.wstep-num{width:20px;height:20px;border-radius:50%;background:currentColor;color:#ffffff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;opacity:.7}
+.wstep.active .wstep-num,.wstep.done .wstep-num{opacity:1}
+.wizard-panel{display:none}.wizard-panel.active{display:block}
+.wizard-nav{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* FORMS */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:4px;position:relative}
+label{font-size:12px;color:var(--t2);font-weight:500;display:flex;align-items:center;gap:5px}
+label .req{color:var(--red)}
+input[type=text],input[type=password],input[type=number],input[type=email],select,textarea{
+  width:100%;background:#ffffff;border:1px solid var(--border);border-radius:var(--r);
+  padding:8px 11px;font-size:13px;color:var(--text);font-family:var(--ff);transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:28px}
+textarea{resize:vertical;min-height:68px}
+.hint{font-size:10px;color:var(--t3);margin-top:3px}
+
+/* SLIDER */
+.slider-row{display:flex;align-items:center;gap:11px}
+.slider-row input[type=range]{flex:1;background:transparent;border:none;padding:0;accent-color:var(--accent);height:4px}
+.slider-val{font-size:13px;font-weight:500;color:var(--accent);min-width:130px;text-align:right}
+
+/* TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.tl{font-size:13px;color:var(--text)}.ts{font-size:11px;color:var(--t3)}
+.tsw{width:40px;height:22px;border-radius:11px;background:#d1d5db;border:1px solid #d1d5db;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.tsw.on{background:linear-gradient(135deg,var(--accent),var(--violet));border-color:var(--accent)}
+.tsw::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tsw.on::after{left:20px}
+
+/* SECTION HEAD */
+.sh{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:11px;margin-top:22px;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
+.sh:first-child{margin-top:0}
+.sh button{margin-left:auto;font-size:11px;color:var(--accent);cursor:pointer;background:none;border:none;font-family:var(--ff);padding:0}
+.sh button:hover{text-decoration:underline}
+
+/* API KEY PANEL */
+.apikey-panel{background:#eff6ff;border:1px solid #d1d5db;border-radius:var(--rl);padding:16px 20px;margin-bottom:20px}
+.apikey-header{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.apikey-header h3{font-size:14px;font-weight:500;color:var(--text)}
+.apikey-body{display:flex;gap:8px;align-items:flex-end}
+.apikey-body .field{flex:1}
+.privacy-note{font-size:11px;color:var(--teal);margin-top:6px;display:flex;align-items:center;gap:5px}
+
+/* COST BOX */
+.cost-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r);padding:14px 18px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:20px}
+.cost-item{display:flex;flex-direction:column;gap:2px}
+.cost-val{font-size:18px;font-weight:500;color:var(--teal);font-family:var(--serif)}
+.cost-lbl{font-size:11px;color:var(--t3)}
+.cost-sep{width:1px;height:36px;background:var(--border)}
+.cost-warn{font-size:11px;color:var(--t2);flex:1;min-width:160px}
+
+/* PHASES */
+.phases{display:flex;margin-bottom:16px}
+.ph{flex:1;text-align:center;padding:8px 4px;background:#f3f4f6;border:1px solid var(--border);border-right:none;font-size:10px;color:var(--t3);transition:all .3s}
+.ph:first-child{border-radius:var(--r) 0 0 var(--r)}.ph:last-child{border-right:1px solid var(--border);border-radius:0 var(--r) var(--r) 0}
+.ph.active{background:#eff6ff;border-color:var(--accent);color:var(--accent)}
+.ph.done{background:#f0fdf4;border-color:var(--teal);color:var(--teal)}
+.pnum{width:20px;height:20px;border-radius:50%;background:currentColor;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 3px;opacity:.5}
+.ph.active .pnum,.ph.done .pnum{opacity:1}
+
+/* HUMAN PROGRESS */
+.human-progress{background:#ffffff;border:1px solid var(--border);box-shadow:var(--shadow);border-radius:var(--r);padding:16px 18px;margin-bottom:14px;display:none}
+.human-progress.v{display:block}
+.hp-step{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.hp-step:last-child{margin-bottom:0}
+.hp-dot{width:8px;height:8px;border-radius:50%;background:#d1d5db;flex-shrink:0}
+.hp-dot.done{background:var(--teal)}.hp-dot.active{background:var(--accent)}
+.hp-text{font-size:13px;color:var(--t3)}.hp-text.done{color:var(--teal)}.hp-text.active{color:var(--text);font-weight:500}
+.prog-bar-wrap{height:3px;background:#e5e7eb;border-radius:2px;margin-top:12px}
+.prog-fill{height:100%;background:linear-gradient(135deg,var(--accent),var(--violet));border-radius:2px;transition:width .5s ease;width:0%}
+
+/* LOG */
+.log-wrap{margin-top:10px}
+.log-toggle{font-size:11px;color:var(--t3);cursor:pointer;display:flex;align-items:center;gap:4px;padding:4px 0;user-select:none}
+.log-toggle:hover{color:var(--t2)}
+.log{background:#f7f8fa;border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-size:11px;max-height:150px;overflow-y:auto;color:var(--t2);font-family:'Courier New',monospace;display:none}
+.log.open{display:block}
+.ll{padding:1px 0}.ll.ok{color:var(--teal)}.ll.warn{color:var(--amber)}.ll.err{color:var(--red)}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed var(--border);border-radius:var(--rl);padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:#fff;position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:#eff6ff}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:32px;margin-bottom:8px}
+.upload-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--t3)}
+.file-list{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.file-item{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;box-shadow:var(--shadow)}
+.file-ico{font-size:18px;flex-shrink:0}
+.file-name{flex:1;font-size:13px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-size{font-size:11px;color:var(--t3)}
+.file-del{width:24px;height:24px;border-radius:50%;background:transparent;border:1px solid var(--border);color:var(--t3);font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.file-del:hover{background:rgba(220,38,38,.1);border-color:var(--red);color:var(--red)}
+
+/* ═══ TOPIC SELECTION CARDS (Step 4) ═══ */
+.topic-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.topic-sel-card{display:flex;align-items:flex-start;gap:14px;background:#fff;border:2px solid var(--border);border-radius:var(--rl);padding:16px 18px;cursor:pointer;transition:all .2s;position:relative}
+.topic-sel-card:hover{border-color:var(--bhi);box-shadow:var(--shadow-md)}
+.topic-sel-card.selected{border-color:var(--accent);background:#eff6ff}
+.topic-sel-card.deselected{opacity:.55;border-color:var(--border);background:#f9fafb}
+.topic-sel-card.deselected:hover{opacity:.75}
+.topic-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--bhi);background:#fff;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:13px}
+.topic-sel-card.selected .topic-check{background:var(--accent);border-color:var(--accent);color:#fff}
+.topic-sel-card.deselected .topic-check{background:#f3f4f6;border-color:#d1d5db;color:var(--t3)}
+.topic-body{flex:1;min-width:0}
+.topic-num-badge{display:inline-flex;align-items:center;gap:6px;margin-bottom:6px}
+.topic-num-dot{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--violet));color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.topic-title-main{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.4}
+.topic-desc-main{font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:8px}
+.topic-apts-preview{display:flex;flex-wrap:wrap;gap:5px}
+.topic-apt-chip{font-size:10px;padding:2px 8px;border-radius:10px;background:#f3f4f6;color:var(--t2);border:1px solid var(--border)}
+.topic-sel-card.selected .topic-apt-chip{background:#dbeafe;color:var(--accent);border-color:#bfdbfe}
+.topic-edit-btn{flex-shrink:0;margin-top:2px}
+.topic-edit-area{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.topic-edit-area.open{display:block}
+.topic-edit-row{display:flex;gap:8px;margin-bottom:6px;align-items:center}
+.topic-edit-row label{font-size:11px;color:var(--t3);min-width:70px;font-weight:500}
+.topic-edit-row input{flex:1;padding:5px 9px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);font-family:var(--ff)}
+.topic-edit-row input:focus{outline:none;border-color:var(--accent)}
+.apt-edit-list{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.apt-edit-row{display:flex;gap:6px;align-items:center}
+.apt-edit-row input{flex:1;padding:5px 9px;font-size:12px;border:1px solid var(--border);border-radius:6px;font-family:var(--ff)}
+.apt-edit-row input:focus{outline:none;border-color:var(--accent)}
+.apt-del-btn{width:22px;height:22px;border-radius:50%;background:transparent;border:1px solid var(--border);color:var(--t3);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.apt-del-btn:hover{background:rgba(220,38,38,.1);border-color:var(--red);color:var(--red)}
+
+/* SELECTION TOOLBAR */
+.sel-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 14px;background:#fff;border:1px solid var(--border);border-radius:var(--r);flex-wrap:wrap}
+.sel-count{font-size:13px;color:var(--t2);flex:1}
+.sel-count strong{color:var(--accent)}
+
+/* GENERATING SKELETON */
+.topic-skeleton{background:#fff;border:2px dashed var(--border);border-radius:var(--rl);padding:28px;text-align:center;color:var(--t3)}
+.skeleton-spinner{width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* BADGE */
+.badge{display:inline-block;font-size:9px;padding:2px 6px;border-radius:8px;font-weight:500}
+.b-r{background:rgba(37,99,235,.1);color:var(--accent)}
+.b-v{background:rgba(124,58,237,.1);color:var(--violet)}
+.b-w{background:rgba(5,150,105,.15);color:var(--teal)}
+.b-p{background:rgba(34,197,94,.15);color:var(--green)}
+.b-a{background:rgba(217,119,6,.15);color:var(--amber)}
+
+/* IBOX */
+.ibox{display:flex;gap:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:var(--r);padding:12px 14px;font-size:12px;color:var(--t2);margin-bottom:16px;line-height:1.6}
+.ibox-violet{background:#f5f3ff;border-color:#ddd6fe;color:var(--violet)}
+
+/* OUTPUT */
+.course-output{display:flex;flex-direction:column;gap:0}
+.tema-card{background:#fff;border:1px solid var(--border);border-radius:var(--rl);margin-bottom:16px;overflow:hidden;box-shadow:var(--shadow)}
+.tema-header{display:flex;align-items:center;gap:12px;padding:16px 20px;background:linear-gradient(135deg,#eff6ff,#f5f3ff);border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.tema-num{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--violet));color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tema-title{flex:1;font-family:var(--serif);font-size:16px;font-weight:400;color:var(--text)}
+.tema-meta{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.tema-badge{font-size:10px;padding:3px 9px;border-radius:10px;font-weight:500}
+.tb-blue{background:#dbeafe;color:var(--accent)}
+.tb-violet{background:#ede9fe;color:var(--violet)}
+.tb-green{background:#d1fae5;color:var(--teal)}
+.tema-chevron{font-size:12px;color:var(--t3);transition:transform .2s;margin-left:4px}
+.tema-chevron.open{transform:rotate(90deg)}
+.tema-body{display:none;padding:20px}
+.tema-body.open{display:block}
+.section-block{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.section-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.section-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.section-content{font-size:13px;color:var(--t2);line-height:1.8}
+.section-content p{margin-bottom:10px}
+.section-content strong{color:var(--text)}
+
+/* FORMULA */
+.formula-block{background:#f8f7ff;border:1px solid #e0d9ff;border-radius:var(--r);padding:12px 16px;margin:10px 0;font-family:'Courier New',monospace;font-size:13px;color:var(--violet);overflow-x:auto;white-space:pre-wrap}
+
+/* QUIZ */
+.quiz-block{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r);padding:14px 16px;margin-top:12px}
+.quiz-title{font-size:12px;font-weight:600;color:var(--teal);margin-bottom:10px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.06em}
+.quiz-q{font-size:13px;color:var(--text);font-weight:500;margin-bottom:8px}
+.quiz-options{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.quiz-opt{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:13px;color:var(--t2);background:#fff;transition:all .15s;text-align:left}
+.quiz-opt:hover:not(.revealed){border-color:var(--teal);background:#f0fdf4;color:var(--text)}
+.quiz-opt.correct{border-color:var(--teal);background:#d1fae5;color:var(--teal);font-weight:500}
+.quiz-opt.wrong{border-color:var(--red);background:#fee2e2;color:var(--red)}
+.quiz-opt.revealed{cursor:default}
+.quiz-opt-letter{width:20px;height:20px;border-radius:50%;background:#e5e7eb;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t2)}
+.quiz-explanation{font-size:12px;color:var(--t2);background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-top:6px;display:none;line-height:1.6}
+
+/* MAPA */
+.mapa-block{background:#f5f3ff;border:1px solid #e0d9ff;border-radius:var(--r);padding:14px 16px;margin-top:12px}
+.mapa-title{font-size:12px;font-weight:600;color:var(--violet);margin-bottom:10px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.06em}
+.mapa-svg-wrap{overflow-x:auto;padding-bottom:4px}
+
+/* ASIGNATURA HEADER */
+.asig-header{background:linear-gradient(135deg,#1e3a8a,var(--violet));border-radius:var(--rl);padding:24px 28px;margin-bottom:24px;color:#fff}
+.asig-header h2{font-family:var(--serif);font-size:24px;font-weight:400;margin-bottom:6px}
+.asig-meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
+.asig-chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 12px;font-size:12px}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;box-shadow:var(--shadow)}
+.stat-val{font-size:24px;font-weight:600;color:var(--accent);font-family:var(--serif)}
+.stat-lbl{font-size:11px;color:var(--t3);margin-top:2px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#f3f4f6}
+::-webkit-scrollbar-thumb{background:var(--bhi);border-radius:2px}
+
+/* ANIM */
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}.fi{animation:fi .3s ease}
+
+@media(max-width:860px){
+  .sidebar{display:none}.topbar,.content{padding-left:16px;padding-right:16px}
+  .form-grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-row">
+      <div class="logo-icon">🎓</div>
+      <div><h1>CursoGen</h1><span>Asignatura IA</span></div>
+    </div>
+  </div>
+  <div class="snav">Pipeline</div>
+  <div class="ni-item active" onclick="showMain('wizard')"><span class="ni">✨</span> Nueva asignatura</div>
+  <div class="ni-item" onclick="showMain('output')"><span class="ni">📚</span> Asignatura generada</div>
+  <div class="ni-item" onclick="showMain('agents')"><span class="ni">🤖</span> Agentes</div>
+  <div class="snav">Recursos</div>
+  <div class="ni-item" onclick="window.open('https://platform.openai.com/api-keys','_blank')"><span class="ni">🔑</span> Obtener API Key</div>
+  <div class="ni-item" onclick="window.open('https://platform.openai.com/usage','_blank')"><span class="ni">💳</span> Ver consumo</div>
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="avatar" id="avI">--</div>
+      <div><div class="un" id="avL">Sin configurar</div><div class="up">gpt-4o-mini · local</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h2 id="topbarTitle">Nueva asignatura</h2>
+      <p id="topbarSub">Sube tus fuentes y genera una asignatura completa con temas, apartados, fórmulas y tests</p>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-stop" id="btnStop" onclick="stopGeneration()" disabled>⏹ Parar</button>
+      <button class="btn btn-primary" id="btnGen" onclick="startGeneration()">▶ Generar</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" id="tab-wizard" onclick="showMain('wizard')">✨ Configurar</div>
+    <div class="tab" id="tab-output" onclick="showMain('output')">📚 Asignatura <span id="outputBadge" class="tab-badge" style="display:none"></span></div>
+    <div class="tab" id="tab-agents" onclick="showMain('agents')">🤖 Agentes</div>
+  </div>
+
+  <!-- ══════ PANEL: WIZARD ══════ -->
+  <div class="tc active content" id="tc-wizard">
+
+    <!-- API KEY -->
+    <div class="apikey-panel">
+      <div class="apikey-header">
+        <span style="font-size:17px">🔑</span>
+        <h3>OpenAI API Key</h3>
+        <span style="margin-left:auto;font-size:11px;background:rgba(5,150,105,.15);color:var(--teal);padding:3px 9px;border-radius:20px;border:1px solid rgba(5,150,105,.3)">🔒 Solo en tu navegador</span>
+      </div>
+      <div class="apikey-body">
+        <div class="field" style="flex:1">
+          <label>API Key <span class="req">*</span></label>
+          <input type="password" id="apiKey" placeholder="sk-..." oninput="onKeyChange()">
+        </div>
+        <button class="btn" onclick="toggleKeyVis()">👁</button>
+        <button class="btn btn-danger" id="btnForget" onclick="forgetKey()" style="display:none">🗑</button>
+      </div>
+      <div class="privacy-note">✅ Las llamadas van directamente de tu navegador a api.openai.com — nunca pasan por ningún servidor nuestro.</div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:7px">
+        <input type="checkbox" id="saveKey" style="width:13px;height:13px;accent-color:var(--accent);cursor:pointer" onchange="onSaveKey()">
+        <label for="saveKey" style="font-size:12px;color:var(--t3);cursor:pointer;font-weight:400">Guardar en localStorage (persiste entre sesiones)</label>
+      </div>
+    </div>
+
+    <!-- WIZARD STEPS: 5 pasos -->
+    <div class="wizard-steps">
+      <div class="wstep active" id="ws1" onclick="goWizard(1)"><div class="wstep-num">1</div>Fuentes</div>
+      <div class="wstep" id="ws2" onclick="goWizard(2)"><div class="wstep-num">2</div>Asignatura</div>
+      <div class="wstep" id="ws3" onclick="goWizard(3)"><div class="wstep-num">3</div>Opciones</div>
+      <div class="wstep" id="ws4" onclick="maybeGoWizard4()"><div class="wstep-num">4</div>Selección temas</div>
+      <div class="wstep" id="ws5" onclick="goWizard(5)"><div class="wstep-num">5</div>Generar</div>
+    </div>
+
+    <!-- ── STEP 1: FUENTES ── -->
+    <div class="wizard-panel active" id="wp1">
+      <div class="sh">📂 Sube tus fuentes de contenido</div>
+      <div class="ibox"><span>ℹ️</span><span>Sube PDFs, apuntes en TXT, documentos Word o cualquier material textual. El agente <strong>Extractor</strong> leerá todo el contenido y construirá la asignatura desde cero.</span></div>
+      <div class="upload-zone" id="uploadZone" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+        <input type="file" id="fileInput" multiple accept=".txt,.pdf,.md,.html,.doc,.docx,.csv,.json" onchange="onFilesSelected(event)">
+        <div class="upload-icon">📎</div>
+        <div class="upload-title">Arrastra ficheros aquí o haz clic para seleccionar</div>
+        <div class="upload-sub">TXT · PDF · MD · HTML · DOC · CSV — hasta 10 ficheros · 5 MB cada uno</div>
+      </div>
+      <div class="file-list" id="fileList"></div>
+      <div class="wizard-nav">
+        <span class="hint" id="fileCountHint">0 ficheros subidos</span>
+        <button class="btn btn-primary" onclick="goWizard(2)">Siguiente: Asignatura →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: ASIGNATURA ── -->
+    <div class="wizard-panel" id="wp2">
+      <div class="sh">🎓 Define tu asignatura</div>
+      <div class="form-grid">
+        <div class="field form-full">
+          <label>Nombre de la asignatura <span class="req">*</span></label>
+          <input type="text" id="asigName" placeholder="Ej: Termodinámica Aplicada, Cálculo I, Bioquímica Estructural..." style="font-size:15px;padding:11px 14px">
+        </div>
+        <div class="field">
+          <label>Número de temas a proponer <span class="req">*</span></label>
+          <div class="slider-row">
+            <input type="range" id="numTemas" min="4" max="20" step="1" value="10"
+              oninput="document.getElementById('numTemasV').textContent=this.value+' temas ('+this.value+' h teóricas)'">
+            <span class="slider-val" id="numTemasV">10 temas (10 h teóricas)</span>
+          </div>
+          <span class="hint">Cada tema = 1 hora lectiva teórica. Podrás desactivar temas antes de generar.</span>
+        </div>
+        <div class="field">
+          <label>Apartados por tema</label>
+          <div class="slider-row">
+            <input type="range" id="numApartados" min="2" max="6" step="1" value="4"
+              oninput="document.getElementById('numApartadosV').textContent=this.value+' apartados'">
+            <span class="slider-val" id="numApartadosV">4 apartados</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Nivel académico</label>
+          <select id="nivel">
+            <option value="bachillerato">Bachillerato / Formación Profesional</option>
+            <option value="grado_inicial">Grado universitario — 1º/2º (introductorio)</option>
+            <option value="grado_avanzado" selected>Grado universitario — 3º/4º (avanzado)</option>
+            <option value="master">Máster / Posgrado</option>
+            <option value="doctorado">Doctorado / Investigación</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Idioma de salida</label>
+          <select id="lang">
+            <option value="español" selected>Español</option>
+            <option value="inglés">English</option>
+            <option value="catalán">Català</option>
+            <option value="francés">Français</option>
+          </select>
+        </div>
+        <div class="field form-full">
+          <label>Instrucciones especiales <span style="font-weight:400;color:var(--t3)">(opcional)</span></label>
+          <input type="text" id="instrucciones" placeholder="Ej: Enfoca los temas en aplicaciones industriales, incluye ejemplos resueltos...">
+        </div>
+      </div>
+      <div class="wizard-nav">
+        <button class="btn" onclick="goWizard(1)">← Atrás</button>
+        <button class="btn btn-primary" onclick="goWizard(3)">Siguiente: Opciones →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: OPCIONES ── -->
+    <div class="wizard-panel" id="wp3">
+      <div class="sh">🤖 Contenido a generar por apartado</div>
+      <div>
+        <div class="toggle-row"><div><div class="tl">📖 Desarrollo teórico detallado</div><div class="ts">Explicación completa del contenido de cada apartado</div></div><div class="tsw on" id="tog-teoria" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="tl">📐 Fórmulas LaTeX</div><div class="ts">Expresiones matemáticas/científicas en formato LaTeX cuando corresponda</div></div><div class="tsw on" id="tog-latex" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="tl">❓ Test de preguntas (5 por apartado)</div><div class="ts">5 preguntas tipo test con 4 opciones, respuesta correcta y explicación</div></div><div class="tsw on" id="tog-test" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="tl">🗺️ Mapa conceptual SVG</div><div class="ts">Diagrama visual de conceptos clave al final de cada tema</div></div><div class="tsw on" id="tog-mapa" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="tl">💡 Ejemplos resueltos</div><div class="ts">Ejemplo práctico al final de cada apartado</div></div><div class="tsw" id="tog-ejemplos" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="tl">🔗 Conexiones entre temas</div><div class="ts">Notas indicando qué temas previos se necesitan o qué temas siguen</div></div><div class="tsw" id="tog-conexiones" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="sh">📋 Programa general</div>
+      <div>
+        <div class="toggle-row"><div><div class="tl">📄 Ficha de asignatura (guía docente)</div><div class="ts">Objetivos, competencias, metodología y criterios de evaluación</div></div><div class="tsw on" id="tog-guia" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="tl">📚 Bibliografía recomendada</div><div class="ts">Libros y recursos extraídos o inferidos del material subido</div></div><div class="tsw on" id="tog-biblio" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="wizard-nav">
+        <button class="btn" onclick="goWizard(2)">← Atrás</button>
+        <button class="btn btn-violet" onclick="startPlanGeneration()">✨ Proponer temas →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 4: SELECCIÓN DE TEMAS ── -->
+    <div class="wizard-panel" id="wp4">
+      <div class="sh" id="sh4">
+        🗂️ Selecciona y edita los temas
+        <button onclick="selectAllTopics()">Todos</button>
+        <button onclick="deselectAllTopics()" style="color:var(--t3)">Ninguno</button>
+      </div>
+
+      <!-- Loading state -->
+      <div id="topicLoadingState" class="topic-skeleton">
+        <div class="skeleton-spinner"></div>
+        <div style="font-size:14px;font-weight:500;color:var(--t2);margin-bottom:4px">Generando propuesta de temas...</div>
+        <div style="font-size:12px">El agente Planner está analizando tus fuentes y diseñando el programa</div>
+      </div>
+
+      <!-- Toolbar + topic cards -->
+      <div id="topicSelectionArea" style="display:none">
+        <div class="ibox ibox-violet" style="margin-bottom:14px">
+          <span>✏️</span>
+          <span>Marca o desmarca los temas que quieres incluir. Puedes <strong>editar el título y los apartados</strong> de cualquier tema antes de generar el contenido completo.</span>
+        </div>
+        <div class="sel-toolbar">
+          <div class="sel-count">
+            <strong id="selCountNum">10</strong> de <span id="selCountTotal">10</span> temas seleccionados
+            &nbsp;·&nbsp; <span id="selHorasNum">10</span> horas teóricas
+          </div>
+          <button class="btn" style="font-size:12px" onclick="selectAllTopics()">✅ Todos</button>
+          <button class="btn" style="font-size:12px" onclick="deselectAllTopics()">☐ Ninguno</button>
+          <button class="btn btn-amber" style="font-size:12px" onclick="regeneratePlan()">🔄 Re-proponer</button>
+        </div>
+        <div class="topic-grid" id="topicGrid"></div>
+      </div>
+
+      <div class="wizard-nav" id="step4Nav" style="display:none">
+        <button class="btn" onclick="goWizard(3)">← Atrás</button>
+        <button class="btn btn-primary" onclick="goWizard(5)" id="btnGoStep5">Siguiente: Generar →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 5: RESUMEN + LANZAR ── -->
+    <div class="wizard-panel" id="wp5">
+      <div class="sh">💰 Estimación antes de generar</div>
+      <div class="cost-box">
+        <div class="cost-item"><div class="cost-val" id="estTemas">10</div><div class="cost-lbl">Temas seleccionados</div></div>
+        <div class="cost-sep"></div>
+        <div class="cost-item"><div class="cost-val" id="estApts">4</div><div class="cost-lbl">Apartados / tema</div></div>
+        <div class="cost-sep"></div>
+        <div class="cost-item"><div class="cost-val" id="estCalls">~40</div><div class="cost-lbl">Llamadas a API</div></div>
+        <div class="cost-sep"></div>
+        <div class="cost-item"><div class="cost-val" id="estCost">~$0.12</div><div class="cost-lbl">Coste estimado</div></div>
+        <div class="cost-warn">⚡ Modelo: <strong>gpt-4o-mini</strong>. El coste real depende del contenido de las fuentes. Con 10 temas y tests espera ~10–15 min.</div>
+      </div>
+
+      <div class="sh">🚦 Pipeline de generación</div>
+      <div class="phases">
+        <div class="ph" id="ph1"><div class="pnum">1</div>Extracción</div>
+        <div class="ph" id="ph2"><div class="pnum">2</div>Guía</div>
+        <div class="ph" id="ph3"><div class="pnum">3</div>Desarrollo</div>
+        <div class="ph" id="ph4"><div class="pnum">4</div>Tests</div>
+        <div class="ph" id="ph5"><div class="pnum">5</div>Mapas</div>
+      </div>
+
+      <div class="human-progress" id="humanProgress">
+        <div id="hpSteps"></div>
+        <div class="prog-bar-wrap"><div class="prog-fill" id="progFill"></div></div>
+      </div>
+
+      <div class="log-wrap">
+        <div class="log-toggle" onclick="toggleLog()">▶ Ver log técnico <span id="logCount" style="color:var(--accent)"></span></div>
+        <div class="log" id="logBox"></div>
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn" onclick="goWizard(4)">← Atrás</button>
+        <button class="btn btn-primary" id="btnGenWizard" onclick="startGeneration()" style="padding:10px 24px;font-size:14px">▶ Generar asignatura</button>
+      </div>
+    </div>
+
+  </div><!-- /wizard -->
+
+  <!-- ══════ PANEL: OUTPUT ══════ -->
+  <div class="tc content" id="tc-output">
+    <div id="outputEmpty" style="text-align:center;padding:60px 20px;color:var(--t3)">
+      <div style="font-size:48px;margin-bottom:12px">🎓</div>
+      <div style="font-size:16px;font-family:var(--serif);color:var(--t2)">La asignatura aparecerá aquí</div>
+      <div style="font-size:13px;margin-top:6px">Configura las opciones y pulsa <strong>Generar</strong></div>
+    </div>
+    <div id="outputContent" style="display:none">
+      <div id="asigHeader"></div>
+      <div class="stats-row" id="statsRow" style="display:none"></div>
+      <div id="exportRow" style="display:none;flex-wrap:wrap;gap:8px;margin-bottom:20px">
+        <button class="btn btn-success" onclick="exportMarkdown()">⬇ Markdown</button>
+        <button class="btn" onclick="exportJSON()">⬇ JSON</button>
+        <button class="btn" onclick="copyAll()">📋 Copiar todo</button>
+      </div>
+      <div id="guiaDocente"></div>
+      <div id="temasList" class="course-output"></div>
+      <div id="bibliografiaBlock"></div>
+    </div>
+  </div>
+
+  <!-- ══════ PANEL: AGENTS ══════ -->
+  <div class="tc content" id="tc-agents">
+    <div class="sh">🤖 Pipeline de agentes — CursoGen</div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#f7f8fa">
+          <th style="text-align:left;padding:8px 12px;color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">Agente</th>
+          <th style="text-align:left;padding:8px 12px;color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">Fase</th>
+          <th style="text-align:left;padding:8px 12px;color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">Función</th>
+        </tr></thead>
+        <tbody id="agentTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════
+//  AGENTS
+// ═══════════════════════════════════════════
+const AGENTS = [
+  {id:'extractor',   fase:'0 – Pre-plan',   badge:'b-a', fn:'Lee y consolida el contenido de los ficheros subidos'},
+  {id:'planner',     fase:'0 – Pre-plan',   badge:'b-a', fn:'Propone el programa completo: lista de temas con títulos y apartados para revisión del usuario'},
+  {id:'guide_gen',   fase:'1 – Guía',       badge:'b-r', fn:'Genera la ficha/guía docente: objetivos, competencias, evaluación'},
+  {id:'developer',   fase:'2 – Desarrollo', badge:'b-v', fn:'Desarrolla el contenido teórico de cada apartado con rigor académico'},
+  {id:'latex_bot',   fase:'2 – Desarrollo', badge:'b-v', fn:'Identifica e inserta fórmulas en formato LaTeX donde corresponde'},
+  {id:'example_bot', fase:'2 – Desarrollo', badge:'b-v', fn:'Genera ejemplos resueltos para cada apartado si está activado'},
+  {id:'quiz_maker',  fase:'3 – Tests',      badge:'b-w', fn:'Crea 5 preguntas tipo test por apartado con respuesta y explicación'},
+  {id:'map_maker',   fase:'4 – Mapas',      badge:'b-p', fn:'Genera mapa conceptual SVG con los conceptos clave de cada tema'},
+  {id:'biblio_bot',  fase:'4 – Mapas',      badge:'b-p', fn:'Recopila y formatea la bibliografía recomendada'},
+];
+
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let uploadedFiles     = [];
+let shouldStop        = false;
+let isRunning         = false;
+let isPlanRunning     = false;
+let generatedData     = null;
+let currentWizardStep = 1;
+let proposedPlan      = null;   // {asignatura, temas:[...]}  — from planner
+let topicSelections   = [];     // array of booleans per topic index
+let sourceTextCache   = '';
+
+const HP_STEPS = [
+  {text:'Extrayendo y consolidando el contenido de las fuentes...'},
+  {text:'Generando ficha docente y guía de la asignatura...'},
+  {text:'Desarrollando el contenido de cada tema y apartado...'},
+  {text:'Creando preguntas tipo test para cada apartado...'},
+  {text:'Dibujando mapas conceptuales SVG por tema...'},
+  {text:'¡Asignatura completada con éxito!'},
+];
+let currentHPStep = -1;
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('cursogen_apikey');
+  if (saved) {
+    document.getElementById('apiKey').value = saved;
+    document.getElementById('saveKey').checked = true;
+    document.getElementById('btnForget').style.display = '';
+    updateAv(saved);
+  }
+  buildAgentTable();
+  buildHPSteps();
+  updateEstimate();
+});
+
+// ═══════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════
+const PANEL_META = {
+  wizard: {title:'Nueva asignatura', sub:'Sube tus fuentes y genera una asignatura completa con temas, apartados, fórmulas y tests'},
+  output: {title:'Asignatura generada', sub:'Navega por los temas, tests y mapas conceptuales'},
+  agents: {title:'Agentes del pipeline', sub:'Los 9 agentes que trabajan en cadena para construir la asignatura'},
+};
+function showMain(name) {
+  ['wizard','output','agents'].forEach(t => {
+    const tc = document.getElementById('tc-'+t); if(tc) tc.classList.remove('active');
+    const tb = document.getElementById('tab-'+t); if(tb) tb.classList.remove('active');
+  });
+  document.querySelectorAll('.ni-item').forEach(n => n.classList.remove('active'));
+  const tc = document.getElementById('tc-'+name); if(tc) tc.classList.add('active');
+  const tb = document.getElementById('tab-'+name); if(tb) tb.classList.add('active');
+  document.querySelectorAll('.ni-item').forEach(n => {
+    if(n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+name+"'")) n.classList.add('active');
+  });
+  const m = PANEL_META[name] || {};
+  document.getElementById('topbarTitle').textContent = m.title || name;
+  document.getElementById('topbarSub').textContent   = m.sub || '';
+}
+
+// ═══════════════════════════════════════════
+//  WIZARD NAV
+// ═══════════════════════════════════════════
+function goWizard(step) {
+  [1,2,3,4,5].forEach(i => {
+    const wp = document.getElementById('wp'+i); if(wp) wp.classList.remove('active');
+    const ws = document.getElementById('ws'+i); if(!ws) return;
+    ws.classList.remove('active','done');
+    if (i < step) ws.classList.add('done');
+  });
+  const wp = document.getElementById('wp'+step); if(wp) wp.classList.add('active');
+  const ws = document.getElementById('ws'+step); if(ws) ws.classList.add('active');
+  currentWizardStep = step;
+  if (step === 5) updateEstimate();
+}
+
+function maybeGoWizard4() {
+  // Only jump to step 4 if plan already exists
+  if (proposedPlan) goWizard(4);
+}
+
+// ═══════════════════════════════════════════
+//  API KEY
+// ═══════════════════════════════════════════
+function onKeyChange() {
+  const v = document.getElementById('apiKey').value.trim();
+  document.getElementById('btnForget').style.display = v ? '' : 'none';
+  updateAv(v);
+  if (document.getElementById('saveKey').checked) localStorage.setItem('cursogen_apikey', v);
+}
+function toggleKeyVis() {
+  const el = document.getElementById('apiKey');
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+function forgetKey() {
+  document.getElementById('apiKey').value = '';
+  document.getElementById('btnForget').style.display = 'none';
+  localStorage.removeItem('cursogen_apikey');
+  updateAv('');
+}
+function onSaveKey() {
+  const v = document.getElementById('apiKey').value.trim();
+  if (document.getElementById('saveKey').checked) localStorage.setItem('cursogen_apikey', v);
+  else localStorage.removeItem('cursogen_apikey');
+}
+function updateAv(key) {
+  const av = document.getElementById('avI'), al = document.getElementById('avL');
+  if (key) { av.textContent = key.slice(3,5).toUpperCase(); al.textContent = 'sk-…'+key.slice(-4); }
+  else     { av.textContent = '--'; al.textContent = 'Sin configurar'; }
+}
+
+// ═══════════════════════════════════════════
+//  FILE UPLOAD
+// ═══════════════════════════════════════════
+function onDragOver(e)  { e.preventDefault(); document.getElementById('uploadZone').classList.add('drag'); }
+function onDragLeave(e) { document.getElementById('uploadZone').classList.remove('drag'); }
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag');
+  handleFiles(Array.from(e.dataTransfer.files));
+}
+function onFilesSelected(e) { handleFiles(Array.from(e.target.files)); }
+
+async function handleFiles(files) {
+  for (const f of files) {
+    if (uploadedFiles.find(x => x.name === f.name)) continue;
+    if (f.size > 5*1024*1024) { alert(`El fichero "${f.name}" supera los 5 MB.`); continue; }
+    const text = await readFile(f);
+    uploadedFiles.push({name:f.name, size:f.size, text});
+  }
+  renderFileList();
+  sourceTextCache = '';  // invalidate cache
+}
+
+function readFile(f) {
+  return new Promise(resolve => {
+    const r = new FileReader();
+    r.onload = e => resolve(e.target.result);
+    r.readAsText(f, 'UTF-8');
+  });
+}
+
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  list.innerHTML = '';
+  uploadedFiles.forEach((f, i) => {
+    const ext = f.name.split('.').pop().toUpperCase();
+    const icons = {PDF:'📕',TXT:'📄',MD:'📝',HTML:'🌐',DOC:'📘',DOCX:'📘',CSV:'📊',JSON:'📋'};
+    const ico = icons[ext] || '📄';
+    const el = document.createElement('div');
+    el.className = 'file-item fi';
+    el.innerHTML = `<div class="file-ico">${ico}</div>
+      <div class="file-name">${f.name}</div>
+      <div class="file-size">${(f.size/1024).toFixed(1)} KB · <span style="color:var(--accent)">${(f.text||'').length.toLocaleString()} chars</span></div>
+      <button class="file-del" onclick="removeFile(${i})">✕</button>`;
+    list.appendChild(el);
+  });
+  document.getElementById('fileCountHint').textContent =
+    uploadedFiles.length + ' fichero' + (uploadedFiles.length===1?'':'s') + ' subido' + (uploadedFiles.length===1?'':'s');
+}
+
+function removeFile(i) { uploadedFiles.splice(i,1); renderFileList(); sourceTextCache=''; }
+
+// ═══════════════════════════════════════════
+//  ESTIMATE
+// ═══════════════════════════════════════════
+function updateEstimate() {
+  const selTemas = topicSelections.length > 0
+    ? topicSelections.filter(Boolean).length
+    : parseInt(document.getElementById('numTemas')?.value || 10);
+  const a     = parseInt(document.getElementById('numApartados')?.value || 4);
+  const test  = document.getElementById('tog-test')?.classList.contains('on');
+  const mapa  = document.getElementById('tog-mapa')?.classList.contains('on');
+  const calls = selTemas*a + (test?selTemas*a:0) + (mapa?selTemas:0) + 3;
+  const cost  = (calls * 0.003).toFixed(2);
+  if(document.getElementById('estTemas'))  document.getElementById('estTemas').textContent  = selTemas;
+  if(document.getElementById('estApts'))   document.getElementById('estApts').textContent   = a;
+  if(document.getElementById('estCalls'))  document.getElementById('estCalls').textContent  = '~'+calls;
+  if(document.getElementById('estCost'))   document.getElementById('estCost').textContent   = '~$'+cost;
+}
+
+// ═══════════════════════════════════════════
+//  LOG
+// ═══════════════════════════════════════════
+let logLines = 0;
+function log(msg, type='') {
+  const box = document.getElementById('logBox'); if(!box) return;
+  const d = document.createElement('div');
+  d.className = 'll'+(type?' '+type:'');
+  d.textContent = new Date().toLocaleTimeString('es')+'  '+msg;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+  logLines++;
+  const cnt = document.getElementById('logCount');
+  if(cnt) cnt.textContent = '('+logLines+')';
+}
+function toggleLog() {
+  const box = document.getElementById('logBox');
+  box.classList.toggle('open');
+  const tog = document.querySelector('.log-toggle');
+  if(tog) tog.textContent = (box.classList.contains('open')?'▼':'▶') + ' Ver log técnico' + (logLines?' ('+logLines+')':'');
+}
+
+// ═══════════════════════════════════════════
+//  HP STEPS
+// ═══════════════════════════════════════════
+function buildHPSteps() {
+  const c = document.getElementById('hpSteps'); if(!c) return;
+  c.innerHTML = HP_STEPS.map((s,i)=>
+    `<div class="hp-step" id="hps${i}">
+       <div class="hp-dot" id="hpd${i}"></div>
+       <div class="hp-text" id="hpt${i}">${s.text}</div>
+     </div>`).join('');
+}
+function setHPStep(n) {
+  currentHPStep = n;
+  HP_STEPS.forEach((_,i)=>{
+    const dot=document.getElementById('hpd'+i), text=document.getElementById('hpt'+i);
+    if(!dot) return;
+    dot.className  = 'hp-dot'+(i<n?' done':i===n?' active':'');
+    text.className = 'hp-text'+(i<n?' done':i===n?' active':'');
+  });
+  document.getElementById('progFill').style.width = Math.round((n/(HP_STEPS.length-1))*100)+'%';
+}
+
+// ═══════════════════════════════════════════
+//  AGENT TABLE
+// ═══════════════════════════════════════════
+function buildAgentTable() {
+  const tb = document.getElementById('agentTableBody'); if(!tb) return;
+  tb.innerHTML = AGENTS.map(a=>`
+    <tr>
+      <td style="padding:8px 12px;border-bottom:1px solid var(--border)"><span class="badge ${a.badge}">${a.id}</span></td>
+      <td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--t3);font-size:12px">${a.fase}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--t2)">${a.fn}</td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════
+//  STOP
+// ═══════════════════════════════════════════
+function stopGeneration() { shouldStop=true; log('⏹ Parando tras la llamada actual...','warn'); }
+
+// ═══════════════════════════════════════════
+//  OPENAI CALL
+// ═══════════════════════════════════════════
+async function callGPT(systemPrompt, userPrompt, maxTokens=2000) {
+  if(shouldStop) throw new Error('__STOPPED__');
+  const key = document.getElementById('apiKey').value.trim();
+  if(!key) throw new Error('API key no configurada.');
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({
+      model:'gpt-4o-mini', max_tokens:maxTokens, temperature:0.7,
+      messages:[{role:'system',content:systemPrompt},{role:'user',content:userPrompt}]
+    })
+  });
+  if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||'HTTP '+res.status); }
+  return (await res.json()).choices[0].message.content.trim();
+}
+
+async function callGPTJSON(systemPrompt, userPrompt, maxTokens=3000) {
+  const raw  = await callGPT(systemPrompt, userPrompt, maxTokens);
+  const clean = raw.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
+  try { return JSON.parse(clean); }
+  catch(e) {
+    const m = clean.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+    if(m) return JSON.parse(m[1]);
+    throw new Error('JSON inválido: '+clean.slice(0,120));
+  }
+}
+
+function getSourceText() {
+  if(sourceTextCache) return sourceTextCache;
+  const MAX = 18000;
+  let t = uploadedFiles.map(f=>`=== FICHERO: ${f.name} ===\n${f.text}`).join('\n\n');
+  if(t.length > MAX){ t = t.slice(0,MAX)+'\n[... truncado ...]'; }
+  sourceTextCache = t;
+  return t;
+}
+
+// ═══════════════════════════════════════════
+//  STEP 3 → STEP 4: GENERATE PLAN PROPOSAL
+// ═══════════════════════════════════════════
+async function startPlanGeneration() {
+  const key = document.getElementById('apiKey').value.trim();
+  if(!key) { alert('Introduce tu API key de OpenAI antes de continuar.'); return; }
+  if(uploadedFiles.length===0) { alert('Sube al menos un fichero con el contenido de la asignatura.'); goWizard(1); return; }
+  const asigName = document.getElementById('asigName').value.trim();
+  if(!asigName) { alert('Escribe el nombre de la asignatura.'); goWizard(2); return; }
+
+  isPlanRunning = true;
+  goWizard(4);
+
+  // Show loading, hide selection
+  document.getElementById('topicLoadingState').style.display = 'block';
+  document.getElementById('topicSelectionArea').style.display = 'none';
+  document.getElementById('step4Nav').style.display = 'none';
+
+  const numTemas     = parseInt(document.getElementById('numTemas').value);
+  const numApartados = parseInt(document.getElementById('numApartados').value);
+  const nivel        = document.getElementById('nivel').value;
+  const lang         = document.getElementById('lang').value;
+  const instrucciones= document.getElementById('instrucciones').value.trim();
+  const nivelDesc    = getNivelDesc(nivel);
+  const sourceText   = getSourceText();
+
+  try {
+    const plan = await callGPTJSON(
+      `Eres el agente Planner. Diseña el programa docente de una asignatura universitaria.
+       Distribuye el contenido en exactamente ${numTemas} temas de 1 hora lectiva cada uno.
+       Cada tema debe tener exactamente ${numApartados} apartados numerados.
+       Responde SOLO en JSON sin texto adicional fuera del JSON.`,
+      `ASIGNATURA: ${asigName}
+NIVEL: ${nivelDesc}
+IDIOMA: ${lang}
+TEMAS: ${numTemas}
+APARTADOS POR TEMA: ${numApartados}
+${instrucciones ? 'INSTRUCCIONES ESPECIALES: '+instrucciones : ''}
+
+CONTENIDO:
+${sourceText}
+
+Devuelve JSON con esta estructura exacta:
+{
+  "asignatura": "${asigName}",
+  "creditos_teoricos": ${numTemas},
+  "nivel": "${nivelDesc}",
+  "descripcion": "descripción académica de 2-3 frases",
+  "objetivos_generales": ["objetivo1","objetivo2","objetivo3"],
+  "competencias": ["competencia1","competencia2","competencia3"],
+  "temas": [
+    {
+      "numero": 1,
+      "titulo": "Título del Tema 1",
+      "descripcion_breve": "una frase describiendo el tema",
+      "apartados": [
+        {"numero":1,"titulo":"Título del apartado 1.1"},
+        {"numero":2,"titulo":"Título del apartado 1.2"}
+      ]
+    }
+  ]
+}`,
+      3800
+    );
+
+    proposedPlan   = plan;
+    topicSelections = (plan.temas||[]).map(()=>true); // all selected by default
+
+    renderTopicSelectionCards();
+
+    document.getElementById('topicLoadingState').style.display  = 'none';
+    document.getElementById('topicSelectionArea').style.display = 'block';
+    document.getElementById('step4Nav').style.display           = 'flex';
+    document.getElementById('ws4').classList.add('done');
+    document.getElementById('ws4').classList.remove('active');
+    document.getElementById('ws4').classList.add('active');
+    updateSelCount();
+
+  } catch(e) {
+    document.getElementById('topicLoadingState').innerHTML = `
+      <div style="font-size:28px;margin-bottom:8px">❌</div>
+      <div style="font-size:14px;font-weight:500;color:var(--red);margin-bottom:4px">Error generando el plan</div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:16px">${e.message}</div>
+      <button class="btn btn-primary" onclick="startPlanGeneration()">🔄 Reintentar</button>`;
+  } finally {
+    isPlanRunning = false;
+  }
+}
+
+async function regeneratePlan() {
+  proposedPlan = null;
+  topicSelections = [];
+  document.getElementById('topicSelectionArea').style.display = 'none';
+  document.getElementById('step4Nav').style.display = 'none';
+  await startPlanGeneration();
+}
+
+// ═══════════════════════════════════════════
+//  TOPIC SELECTION CARDS RENDER
+// ═══════════════════════════════════════════
+function renderTopicSelectionCards() {
+  const grid = document.getElementById('topicGrid');
+  grid.innerHTML = '';
+  (proposedPlan.temas||[]).forEach((tema, i) => {
+    const sel = topicSelections[i];
+    const card = document.createElement('div');
+    card.className = 'topic-sel-card fi '+(sel?'selected':'deselected');
+    card.id = 'tsc-'+i;
+
+    const aptChips = (tema.apartados||[]).map(a=>
+      `<span class="topic-apt-chip" id="apt-chip-${i}-${a.numero-1}">${a.numero}. ${a.titulo}</span>`
+    ).join('');
+
+    const aptEdits = (tema.apartados||[]).map((a,ai)=>
+      `<div class="apt-edit-row">
+         <input type="text" value="${escHtml(a.titulo)}" id="apt-inp-${i}-${ai}"
+           oninput="updateAptTitle(${i},${ai},this.value)" placeholder="Título del apartado">
+         <button class="apt-del-btn" onclick="deleteApt(${i},${ai})" title="Eliminar apartado">✕</button>
+       </div>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="topic-check" id="tcheck-${i}">${sel?'✓':''}</div>
+      <div class="topic-body">
+        <div class="topic-num-badge">
+          <div class="topic-num-dot">${tema.numero}</div>
+          <span style="font-size:11px;color:var(--t3)">Tema ${tema.numero} · 1h teórica</span>
+        </div>
+        <div class="topic-title-main" id="ttitle-disp-${i}">${escHtml(tema.titulo)}</div>
+        <div class="topic-desc-main" style="color:var(--t3);font-size:12px">${escHtml(tema.descripcion_breve||'')}</div>
+        <div class="topic-apts-preview" id="tapts-preview-${i}">${aptChips}</div>
+        <div class="topic-edit-area" id="tedit-${i}">
+          <div class="topic-edit-row">
+            <label>Título</label>
+            <input type="text" value="${escHtml(tema.titulo)}" id="ttitle-inp-${i}"
+              oninput="updateTopicTitle(${i},this.value)">
+          </div>
+          <div style="font-size:11px;color:var(--t3);margin:8px 0 4px;font-weight:500">Apartados</div>
+          <div class="apt-edit-list" id="apts-edit-${i}">${aptEdits}</div>
+          <button class="btn" style="font-size:11px;margin-top:8px" onclick="addApt(${i})">+ Añadir apartado</button>
+        </div>
+      </div>
+      <div class="topic-edit-btn">
+        <button class="btn" style="font-size:11px" onclick="toggleEdit(event,${i})">✏️ Editar</button>
+      </div>`;
+
+    // Click to toggle selection (but not if clicking edit button or inside edit area)
+    card.addEventListener('click', (e)=>{
+      if(e.target.closest('.topic-edit-btn') || e.target.closest('.topic-edit-area')) return;
+      toggleTopicSel(i);
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+function toggleTopicSel(i) {
+  topicSelections[i] = !topicSelections[i];
+  const card  = document.getElementById('tsc-'+i);
+  const check = document.getElementById('tcheck-'+i);
+  card.className  = 'topic-sel-card '+(topicSelections[i]?'selected':'deselected');
+  check.textContent = topicSelections[i]?'✓':'';
+  updateSelCount();
+}
+
+function updateTopicTitle(i, val) {
+  proposedPlan.temas[i].titulo = val;
+  const disp = document.getElementById('ttitle-disp-'+i);
+  if(disp) disp.textContent = val;
+}
+
+function updateAptTitle(i, ai, val) {
+  if(proposedPlan.temas[i] && proposedPlan.temas[i].apartados[ai])
+    proposedPlan.temas[i].apartados[ai].titulo = val;
+  const chip = document.getElementById('apt-chip-'+i+'-'+ai);
+  if(chip) chip.textContent = (ai+1)+'. '+val;
+}
+
+function deleteApt(i, ai) {
+  const t = proposedPlan.temas[i];
+  t.apartados.splice(ai, 1);
+  // renumber
+  t.apartados.forEach((a,idx)=>{ a.numero=idx+1; });
+  renderTopicSelectionCards();
+}
+
+function addApt(i) {
+  const t = proposedPlan.temas[i];
+  const next = t.apartados.length+1;
+  t.apartados.push({numero:next, titulo:'Nuevo apartado '+next});
+  renderTopicSelectionCards();
+  // Reopen edit for this card
+  const ea = document.getElementById('tedit-'+i);
+  if(ea) ea.classList.add('open');
+}
+
+function toggleEdit(e, i) {
+  e.stopPropagation();
+  const ea = document.getElementById('tedit-'+i);
+  if(ea) ea.classList.toggle('open');
+}
+
+function selectAllTopics() {
+  topicSelections = topicSelections.map(()=>true);
+  renderTopicSelectionCards();
+  updateSelCount();
+}
+
+function deselectAllTopics() {
+  topicSelections = topicSelections.map(()=>false);
+  renderTopicSelectionCards();
+  updateSelCount();
+}
+
+function updateSelCount() {
+  const sel   = topicSelections.filter(Boolean).length;
+  const total = topicSelections.length;
+  const selNum = document.getElementById('selCountNum');
+  const selTot = document.getElementById('selCountTotal');
+  const selH   = document.getElementById('selHorasNum');
+  if(selNum) selNum.textContent = sel;
+  if(selTot) selTot.textContent = total;
+  if(selH)   selH.textContent   = sel;
+  updateEstimate();
+  const btn = document.getElementById('btnGoStep5');
+  if(btn){ btn.disabled = sel===0; btn.textContent = sel===0 ? '(Selecciona al menos 1 tema)' : 'Siguiente: Generar →'; }
+}
+
+// ═══════════════════════════════════════════
+//  MAIN GENERATION (Step 5)
+// ═══════════════════════════════════════════
+async function startGeneration() {
+  if(isRunning) return;
+  const key = document.getElementById('apiKey').value.trim();
+  if(!key){ alert('Introduce tu API key de OpenAI.'); return; }
+  if(!proposedPlan){ alert('Primero genera y revisa el plan de temas (paso 4).'); goWizard(3); return; }
+  const selTemas = (proposedPlan.temas||[]).filter((_,i)=>topicSelections[i]);
+  if(selTemas.length===0){ alert('Selecciona al menos un tema para generar.'); goWizard(4); return; }
+
+  isRunning  = true;
+  shouldStop = false;
+  logLines   = 0;
+  document.getElementById('btnGen').disabled         = true;
+  document.getElementById('btnGen').textContent      = '⏳ Generando...';
+  document.getElementById('btnGenWizard').disabled   = true;
+  document.getElement
