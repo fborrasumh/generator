@@ -1,415 +1,1770 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generador de Temas – Cuadernos Jupyter + Mapas Conceptuales</title>
-  <!-- Bootstrap 5 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- jsMind CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/jsmind@0.9.1/style/jsmind.css">
-  <style>
-    body { background: #f4f6f9; font-family: 'Segoe UI', system-ui, sans-serif; }
-    .container { max-width: 1200px; margin-top: 20px; }
-    .card { margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    .notebook-cell {
-      border: 1px solid #dee2e6;
-      border-radius: 6px;
-      margin-bottom: 10px;
-      background: white;
-    }
-    .cell-header {
-      background: #f8f9fa;
-      padding: 6px 12px;
-      font-size: 0.8rem;
-      color: #6c757d;
-      border-bottom: 1px solid #dee2e6;
-      display: flex;
-      justify-content: space-between;
-    }
-    .cell-body {
-      padding: 12px;
-    }
-    .markdown-body { font-size: 0.95rem; }
-    .code-body {
-      background: #fafafa;
-      font-family: 'Fira Code', monospace;
-      font-size: 0.9rem;
-      white-space: pre-wrap;
-    }
-    #concept-map-container {
-      width: 100%;
-      height: 400px;
-      border: 1px solid #ddd;
-      margin-bottom: 15px;
-    }
-    .nav-tabs .nav-link { font-weight: 500; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Generator — Generador de Asignaturas IA</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<style>
+:root{
+  --accent:#2563eb;--accent-dim:#1d4ed8;--accent-light:#eff6ff;
+  --teal:#059669;--teal-dim:#047857;--teal-light:#f0fdf4;
+  --violet:#7c3aed;--violet-light:#f5f3ff;
+  --amber:#d97706;--red:#dc2626;--green:#16a34a;
+  --surface:#f7f8fa;--s2:#fff;--border:#e5e7eb;--bhi:#d1d5db;
+  --text:#111827;--t2:#4b5563;--t3:#9ca3af;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08);
+  --ff:'DM Sans',system-ui,sans-serif;--serif:'DM Serif Display',Georgia,serif;
+  --r:8px;--rl:12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--ff);background:var(--surface);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.app{display:flex;min-height:100vh}
+.sidebar{width:262px;flex-shrink:0;background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
+.logo-row{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--violet));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.logo h1{font-family:var(--serif);font-size:17px;color:var(--text);font-weight:400}
+.logo span{font-size:10px;color:var(--t3);letter-spacing:.08em;text-transform:uppercase}
+.snav{padding:14px 16px 5px;font-size:10px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.ni{display:flex;align-items:center;gap:9px;padding:7px 16px;font-size:13px;color:var(--t2);cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.ni:hover{background:#f3f4f6;color:var(--text)}
+.ni.active{background:#eff6ff;color:var(--accent);border-left-color:var(--accent)}
+.ni .ic{font-size:14px;width:17px;text-align:center}
+/* HISTORIAL */
+.hist-item{display:flex;align-items:center;gap:8px;padding:6px 16px 6px 14px;font-size:12px;color:var(--t2);cursor:pointer;border-left:2px solid transparent;transition:all .15s}
+.hist-item:hover{background:#f3f4f6;color:var(--text)}
+.hist-item.active-hist{background:#eff6ff;color:var(--accent);border-left-color:var(--accent)}
+.hist-item .hist-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-item .hist-del{opacity:0;font-size:11px;padding:1px 4px;border-radius:4px;color:var(--red);background:transparent;border:none;cursor:pointer;flex-shrink:0}
+.hist-item:hover .hist-del{opacity:1}
+.hist-empty{padding:8px 16px;font-size:11px;color:var(--t3);font-style:italic}
+/* STORAGE */
+.stor-panel{margin:8px 10px;background:#f7f8fa;border:1px solid var(--border);border-radius:var(--r);padding:10px 12px}
+.stor-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:3px}
+.stor-row:last-of-type{margin-bottom:0}
+.stor-lbl{color:var(--t3)}.stor-val{font-weight:500;color:var(--t2)}
+.stor-total{font-size:12px;font-weight:600;color:var(--teal);margin-bottom:6px}
+.sidebar-footer{margin-top:auto;padding:12px 16px;border-top:1px solid var(--border);background:#fafafa}
+.user-row{display:flex;align-items:center;gap:9px}
+.avatar{width:28px;height:28px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--accent);border:1px solid #bfdbfe}
+.un{font-size:13px;color:var(--text);font-weight:500}.up{font-size:11px;color:var(--t3)}
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 26px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:20;gap:12px}
+.topbar h2{font-family:var(--serif);font-size:18px;font-weight:400;white-space:nowrap}
+.topbar p{font-size:11px;color:var(--t3);margin-top:1px}
+.topbar-actions{display:flex;gap:8px;flex-shrink:0}
+button{font-family:var(--ff);cursor:pointer;border:none;transition:all .15s}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;font-size:13px;border-radius:var(--r);border:1px solid var(--bhi);background:transparent;color:var(--t2)}
+.btn:hover{background:#f3f4f6;color:var(--text)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--violet));border-color:var(--accent);color:#fff}
+.btn-primary:hover:not(:disabled){filter:brightness(1.06)}
+.btn-violet{background:linear-gradient(135deg,var(--violet),#6d28d9);border-color:var(--violet);color:#fff}
+.btn-violet:hover:not(:disabled){filter:brightness(1.08)}
+.btn-success{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn-success:hover:not(:disabled){background:var(--teal-dim)}
+.btn-danger{border-color:rgba(220,38,38,.4);color:var(--red)}
+.btn-danger:hover{background:rgba(220,38,38,.08)}
+.btn-stop{border:1px solid rgba(220,38,38,.5);color:var(--red);background:transparent}
+.btn-stop:hover:not(:disabled){background:rgba(220,38,38,.08);border-color:var(--red)}
+.btn-stop:disabled{opacity:.35;cursor:not-allowed}
+.btn-amber{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.4);color:var(--amber)}
+.btn-amber:hover{background:rgba(245,158,11,.2)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.tabs{display:flex;border-bottom:1px solid var(--border);padding:0 26px;background:#fff;overflow-x:auto;flex-shrink:0}
+.tab{padding:11px 13px;font-size:13px;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:5px;margin-bottom:-1px;position:relative}
+.tab:hover{color:var(--text)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-dot{position:absolute;top:7px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--teal);display:none}
+.tc{display:none}.tc.active{display:block}
+.content{padding:22px 26px;flex:1;overflow-y:auto;max-height:calc(100vh - 113px)}
+/* WIZARD */
+.wiz-bar{display:flex;margin-bottom:22px;border-radius:var(--r);overflow:hidden;border:1px solid var(--border)}
+.wst{flex:1;padding:9px 4px;text-align:center;font-size:11px;color:var(--t3);background:#f7f8fa;border-right:1px solid var(--border);cursor:pointer;transition:all .18s}
+.wst:last-child{border-right:none}
+.wst.active{background:#eff6ff;color:var(--accent)}
+.wst.done{background:#f0fdf4;color:var(--teal)}
+.wst-dot{width:19px;height:19px;border-radius:50%;background:currentColor;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 3px;opacity:.6}
+.wst.active .wst-dot,.wst.done .wst-dot{opacity:1}
+.wp{display:none}.wp.active{display:block}
+.wiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)}
+/* FORMS */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ff{grid-column:1/-1}
+.fld{display:flex;flex-direction:column;gap:4px}
+label{font-size:12px;color:var(--t2);font-weight:500}
+label .req{color:var(--red)}
+input[type=text],input[type=password],select,textarea{width:100%;background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:8px 11px;font-size:13px;color:var(--text);font-family:var(--ff);transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:28px}
+.hint{font-size:10px;color:var(--t3);margin-top:2px}
+.slrow{display:flex;align-items:center;gap:10px}
+.slrow input[type=range]{flex:1;accent-color:var(--accent);border:none;background:transparent;padding:0}
+.slval{font-size:13px;font-weight:500;color:var(--accent);min-width:140px;text-align:right}
+.togrow{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.togrow:last-child{border-bottom:none}
+.tl{font-size:13px;color:var(--text)}.ts{font-size:11px;color:var(--t3)}
+.tsw{width:40px;height:22px;border-radius:11px;background:#d1d5db;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;border:none}
+.tsw.on{background:linear-gradient(135deg,var(--accent),var(--violet))}
+.tsw::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.tsw.on::after{left:21px}
+.sh{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin:18px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
+.sh:first-child{margin-top:0}
+/* API KEY */
+.apibox{background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--rl);padding:14px 16px;margin-bottom:18px}
+.apibox-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.apibox-head h3{font-size:14px;font-weight:500}
+.apibox-row{display:flex;gap:8px;align-items:flex-end}
+.privacy{font-size:11px;color:var(--teal);margin-top:5px;display:flex;align-items:center;gap:5px}
+/* COST */
+.costbox{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r);padding:13px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.ci{display:flex;flex-direction:column;gap:2px}
+.cv{font-size:17px;font-weight:500;color:var(--teal);font-family:var(--serif)}
+.cl{font-size:11px;color:var(--t3)}
+.cs{width:1px;height:32px;background:var(--border)}
+.cw{font-size:11px;color:var(--t2);flex:1;min-width:160px}
+/* PHASES */
+.phases{display:flex;margin-bottom:12px}
+.ph{flex:1;text-align:center;padding:7px 3px;background:#f3f4f6;border:1px solid var(--border);border-right:none;font-size:10px;color:var(--t3);transition:all .3s}
+.ph:first-child{border-radius:var(--r) 0 0 var(--r)}.ph:last-child{border-right:1px solid var(--border);border-radius:0 var(--r) var(--r) 0}
+.ph.active{background:#eff6ff;border-color:var(--accent);color:var(--accent)}
+.ph.done{background:#f0fdf4;border-color:var(--teal);color:var(--teal)}
+.pn{width:18px;height:18px;border-radius:50%;background:currentColor;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 3px;opacity:.5}
+.ph.active .pn,.ph.done .pn{opacity:1}
+/* PROGRESS DETAIL */
+.prog-detail{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;display:none}
+.prog-detail.v{display:block}
+.pd-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.pd-row:last-child{margin-bottom:0}
+.pd-dot{width:7px;height:7px;border-radius:50%;background:#d1d5db;flex-shrink:0}
+.pd-dot.done{background:var(--teal)}.pd-dot.active{background:var(--accent)}
+.pd-txt{font-size:12px;color:var(--t3)}.pd-txt.done{color:var(--teal)}.pd-txt.active{color:var(--text);font-weight:500}
+.pb{height:3px;background:#e5e7eb;border-radius:2px;margin-top:10px}
+.pf{height:100%;background:linear-gradient(135deg,var(--accent),var(--violet));border-radius:2px;transition:width .5s ease;width:0%}
+/* TOPIC PROGRESS (per-tema inside gen) */
+.tprog-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:12px}
+.tprog-row:last-child{border-bottom:none}
+.tprog-n{width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#e5e7eb;color:var(--t3)}
+.tprog-n.done{background:var(--teal);color:#fff}.tprog-n.active{background:var(--accent);color:#fff}
+.tprog-title{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tprog-status{font-size:10px;color:var(--t3);flex-shrink:0}
+/* LOG */
+.logtog{font-size:11px;color:var(--t3);cursor:pointer;padding:3px 0;user-select:none;display:flex;align-items:center;gap:4px}
+.logtog:hover{color:var(--t2)}
+.logbox{background:#f7f8fa;border:1px solid var(--border);border-radius:var(--r);padding:9px 11px;font-size:11px;max-height:130px;overflow-y:auto;color:var(--t2);font-family:'Courier New',monospace;display:none;margin-top:4px}
+.logbox.open{display:block}
+.ll{padding:1px 0}.ll.ok{color:var(--teal)}.ll.w{color:var(--amber)}.ll.err{color:var(--red)}
+/* UPLOAD */
+.upzone{border:2px dashed var(--border);border-radius:var(--rl);padding:26px;text-align:center;cursor:pointer;transition:all .2s;background:#fff;position:relative}
+.upzone:hover,.upzone.drag{border-color:var(--accent);background:#eff6ff}
+.upzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.flist{display:flex;flex-direction:column;gap:7px;margin-top:11px}
+.fi{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:8px 12px}
+.fi-ico{font-size:16px;flex-shrink:0}
+.fi-name{flex:1;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fi-sz{font-size:11px;color:var(--t3);white-space:nowrap}
+.fi-del{width:21px;height:21px;border-radius:50%;background:transparent;border:1px solid var(--border);color:var(--t3);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.fi-del:hover{background:rgba(220,38,38,.08);border-color:var(--red);color:var(--red)}
+.ibox{display:flex;gap:9px;border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.6}
+.ibox-blue{background:#eff6ff;border:1px solid #bfdbfe}
+.ibox-violet{background:#f5f3ff;border:1px solid #ddd6fe;color:var(--violet)}
+.ibox-amber{background:#fffbeb;border:1px solid #fde68a}
+/* TOPIC CARDS */
+.topic-toolbar{display:flex;align-items:center;gap:7px;margin-bottom:11px;padding:8px 12px;background:#fff;border:1px solid var(--border);border-radius:var(--r);flex-wrap:wrap}
+.topic-toolbar-count{font-size:13px;color:var(--t2);flex:1}
+.topic-toolbar-count strong{color:var(--accent)}
+.topic-list{display:flex;flex-direction:column;gap:8px}
+.tcard{background:#fff;border:2px solid var(--border);border-radius:var(--rl);overflow:hidden;transition:all .18s}
+.tcard.on{border-color:var(--accent)}
+.tcard.off{opacity:.5;border-color:#e5e7eb;background:#f9fafb}
+.tcard.off:hover{opacity:.7}
+.tcard-head{display:flex;align-items:flex-start;gap:11px;padding:13px 15px;cursor:pointer}
+.tcard-check{width:21px;height:21px;border-radius:6px;border:2px solid var(--bhi);background:#fff;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s}
+.tcard.on .tcard-check{background:var(--accent);border-color:var(--accent);color:#fff}
+.tcard.off .tcard-check{background:#f3f4f6;border-color:#d1d5db;color:var(--t3)}
+.tcard-num{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--violet));color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tcard-body{flex:1;min-width:0}
+.tcard-label{font-size:10px;color:var(--t3);margin-bottom:2px}
+.tcard-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;line-height:1.4}
+.tcard-desc{font-size:12px;color:var(--t3);margin-bottom:7px;line-height:1.4}
+.tcard-chips{display:flex;flex-wrap:wrap;gap:4px}
+.tcard-chip{font-size:10px;padding:2px 7px;border-radius:9px;background:#f3f4f6;color:var(--t2);border:1px solid var(--border)}
+.tcard.on .tcard-chip{background:#dbeafe;color:var(--accent);border-color:#bfdbfe}
+.tcard-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0;padding-top:1px}
+.tcard-edit{display:none;padding:0 15px 13px;border-top:1px solid var(--border);background:#fafafa}
+.tcard-edit.open{display:block}
+.edit-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;margin-top:9px}
+.edit-row label{font-size:11px;color:var(--t3);min-width:54px;font-weight:500;flex-shrink:0}
+.edit-row input{flex:1;padding:5px 9px;font-size:12px;border:1px solid var(--border);border-radius:6px;font-family:var(--ff);background:#fff;color:var(--text)}
+.edit-row input:focus{outline:none;border-color:var(--accent)}
+.apts-edit{display:flex;flex-direction:column;gap:4px;margin-top:7px}
+.apt-row{display:flex;gap:6px;align-items:center}
+.apt-row input{flex:1;padding:5px 9px;font-size:12px;border:1px solid var(--border);border-radius:6px;font-family:var(--ff);color:var(--text)}
+.apt-row input:focus{outline:none;border-color:var(--accent)}
+.apt-del{width:21px;height:21px;border-radius:50%;border:1px solid var(--border);color:var(--t3);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;background:transparent}
+.apt-del:hover{background:rgba(220,38,38,.08);border-color:var(--red);color:var(--red)}
+.edit-lbl{font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+/* SKELETON */
+.skeleton{background:#fff;border:2px dashed var(--border);border-radius:var(--rl);padding:30px;text-align:center;color:var(--t3)}
+.spin{width:28px;height:28px;border:3px solid #e5e7eb;border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* SEARCH */
+.search-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:7px 12px}
+.search-bar input{flex:1;border:none;outline:none;font-size:13px;font-family:var(--ff);color:var(--text);background:transparent}
+.search-bar input::placeholder{color:var(--t3)}
+.search-count{font-size:11px;color:var(--t3);flex-shrink:0;white-space:nowrap}
+.search-clear{font-size:11px;color:var(--accent);cursor:pointer;flex-shrink:0;background:none;border:none;padding:0}
+.highlight{background:#fef08a;border-radius:2px;padding:0 1px}
+/* OUTPUT */
+.asig-hdr{background:linear-gradient(135deg,#1e3a8a,var(--violet));border-radius:var(--rl);padding:20px 24px;margin-bottom:20px;color:#fff}
+.asig-hdr h2{font-family:var(--serif);font-size:22px;font-weight:400;margin-bottom:4px}
+.asig-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px}
+.asig-chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:3px 10px;font-size:11px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.scard{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:12px;text-align:center}
+.sv{font-size:21px;font-weight:600;color:var(--accent);font-family:var(--serif)}
+.sl{font-size:11px;color:var(--t3);margin-top:1px}
+.tema-card{background:#fff;border:1px solid var(--border);border-radius:var(--rl);margin-bottom:12px;overflow:hidden}
+.tema-card.generating{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.1)}
+.tema-hdr{display:flex;align-items:center;gap:10px;padding:13px 16px;background:linear-gradient(135deg,#eff6ff,#f5f3ff);border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.tema-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--violet));color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tema-num.gen-spin{animation:spin 1s linear infinite;background:conic-gradient(var(--accent),var(--violet),var(--accent))}
+.tema-title{flex:1;font-family:var(--serif);font-size:15px;font-weight:400}
+.tema-badges{display:flex;gap:5px;flex-shrink:0}
+.tbadge{font-size:10px;padding:2px 7px;border-radius:9px;font-weight:500}
+.tb-b{background:#dbeafe;color:var(--accent)}.tb-g{background:#d1fae5;color:var(--teal)}.tb-v{background:#ede9fe;color:var(--violet)}
+.tema-chev{font-size:11px;color:var(--t3);transition:transform .2s;margin-left:3px}
+.tema-chev.open{transform:rotate(90deg)}
+.tema-body{display:none;padding:16px}
+.tema-body.open{display:block}
+.tema-actions{display:flex;gap:6px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.sb{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.sb:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.stitle{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.scontent{font-size:13px;color:var(--t2);line-height:1.8}
+.scontent p{margin-bottom:8px}
+.scontent strong{color:var(--text)}
+/* KATEX overrides */
+.katex-block{background:#f8f7ff;border:1px solid #e0d9ff;border-radius:var(--r);padding:10px 14px;margin:8px 0;overflow-x:auto}
+.katex-block .katex-display{margin:0}
+.quiz{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r);padding:12px 14px;margin-top:10px}
+.quiz-title{font-size:11px;font-weight:600;color:var(--teal);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em}
+.quiz-q{font-size:13px;font-weight:500;margin-bottom:7px;margin-top:12px}
+.quiz-opts{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.qopt{display:flex;align-items:flex-start;gap:7px;padding:6px 9px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:13px;color:var(--t2);background:#fff;transition:all .12s;text-align:left}
+.qopt:hover:not(.revealed){border-color:var(--teal);background:#f0fdf4}
+.qopt.correct{border-color:var(--teal);background:#d1fae5;color:var(--teal);font-weight:500}
+.qopt.wrong{border-color:var(--red);background:#fee2e2;color:var(--red)}
+.qopt.revealed{cursor:default}
+.qlet{width:18px;height:18px;border-radius:50%;background:#e5e7eb;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.qexp{font-size:12px;color:var(--t2);background:#fff;border:1px solid var(--border);border-radius:6px;padding:7px 9px;margin-top:5px;display:none;line-height:1.6}
+.mapa{background:#f5f3ff;border:1px solid #e0d9ff;border-radius:var(--r);padding:12px 14px;margin-top:10px}
+.mapa-title{font-size:11px;font-weight:600;color:var(--violet);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em}
+.badge{display:inline-block;font-size:9px;padding:2px 6px;border-radius:8px;font-weight:500}
+.b-r{background:rgba(37,99,235,.1);color:var(--accent)}.b-v{background:rgba(124,58,237,.1);color:var(--violet)}
+.b-w{background:rgba(5,150,105,.15);color:var(--teal)}.b-a{background:rgba(217,119,6,.15);color:var(--amber)}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:#f3f4f6}::-webkit-scrollbar-thumb{background:var(--bhi);border-radius:2px}
+@keyframes fadeup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.anim{animation:fadeup .22s ease}
+@media print{.sidebar,.topbar,.tabs,.topbar-actions,.tema-actions,.search-bar,.wiz-bar{display:none!important}.content{max-height:none!important;overflow:visible!important;padding:0!important}.app{display:block}.main{display:block}.tc{display:block!important}.tema-body{display:block!important}}
+@media(max-width:820px){.sidebar{display:none}.topbar,.content{padding-left:14px;padding-right:14px}.fg{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1 class="mb-3">📚 Generador de Cuadernos Jupyter con Mapas Conceptuales</h1>
-    <p class="text-muted">Define tus temas, apartados y preguntas. Todo se procesa en tu navegador usando tu API Key de OpenAI.</p>
-
-    <!-- Configuración -->
-    <div class="card p-3">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-2">
-          <label class="form-label">🔑 OpenAI API Key</label>
-          <input type="password" id="apiKey" class="form-control" placeholder="sk-...">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">📝 Nº de temas</label>
-          <input type="number" id="numTopics" class="form-control" value="2" min="1" max="10">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">📂 Apartados por tema</label>
-          <input type="number" id="numSections" class="form-control" value="3" min="1" max="8">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">❓ Preguntas test por apartado</label>
-          <input type="number" id="numQuestions" class="form-control" value="2" min="0" max="5">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">📎 Fuentes locales (txt)</label>
-          <input type="file" id="localFiles" class="form-control" multiple accept=".txt">
-        </div>
-        <div class="col-md-2">
-          <button id="generateBtn" class="btn btn-primary w-100">⚡ Generar</button>
-        </div>
-      </div>
-      <small class="text-muted mt-2">Las fuentes locales se adjuntarán como contexto en cada solicitud a la API.</small>
+<div class="app">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo"><div class="logo-row"><div class="logo-icon">🎓</div><div><h1>Generator</h1><span>Generador IA</span></div></div></div>
+  <div class="snav">Navegación</div>
+  <div class="ni active" onclick="showMain('wizard')"><span class="ic">✨</span> Nueva asignatura</div>
+  <div class="ni" onclick="showMain('output')"><span class="ic">📚</span> Asignatura activa</div>
+  <div class="ni" onclick="showMain('agents')"><span class="ic">🤖</span> Agentes</div>
+  <div class="snav">Historial <span id="histCount" style="font-weight:400;text-transform:none;letter-spacing:0"></span></div>
+  <div id="histList"><div class="hist-empty">Aún no hay asignaturas guardadas</div></div>
+  <div style="padding:6px 10px 2px"><button class="btn btn-sm" style="width:100%;justify-content:center;font-size:11px" onclick="showMain('wizard')">+ Nueva asignatura</button></div>
+  <div class="snav">Almacenamiento</div>
+  <div class="stor-panel">
+    <div class="stor-total" id="storTotal">— MB usados</div>
+    <div class="stor-row"><span class="stor-lbl">📂 Fuentes</span><span class="stor-val" id="storFiles">—</span></div>
+    <div class="stor-row"><span class="stor-lbl">🗂️ Asignaturas</span><span class="stor-val" id="storAsigs">—</span></div>
+    <div style="margin-top:8px"><button class="btn btn-danger btn-sm" style="width:100%;justify-content:center;font-size:11px" onclick="clearAllData()">🗑 Borrar todo</button></div>
+  </div>
+  <div class="sidebar-footer"><div class="user-row"><div class="avatar" id="avI">--</div><div><div class="un" id="avL">Sin configurar</div><div class="up">gpt-4o-mini · IndexedDB</div></div></div></div>
+</aside>
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div><h2 id="tbarTitle">Nueva asignatura</h2><p id="tbarSub">Sube tus fuentes y genera la asignatura completa</p></div>
+    <div class="topbar-actions">
+      <button class="btn btn-stop" id="btnStop" onclick="stopGen()" disabled>⏹ Parar</button>
+      <button class="btn btn-primary" id="btnGen" onclick="smartNextStep()">▶ Continuar</button>
     </div>
-
-    <!-- Progreso -->
-    <div id="progressCard" class="card p-3 d-none">
-      <div class="d-flex align-items-center">
-        <strong id="progressText">Generando...</strong>
-        <div class="spinner-border spinner-border-sm ms-2 text-primary" role="status"></div>
+  </div>
+  <div id="genBanner" style="display:none;background:linear-gradient(135deg,var(--accent),var(--violet));color:#fff;padding:8px 20px;font-size:12px;align-items:center;gap:12px;flex-shrink:0">
+    <div style="width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;flex-shrink:0"></div>
+    <span id="genBannerTxt">Generando asignatura...</span>
+    <span id="genBannerPct" style="font-weight:600;margin-left:auto;flex-shrink:0"></span>
+    <button onclick="showMain('wizard');goW(5)" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:11px;padding:3px 10px;border-radius:6px;cursor:pointer;flex-shrink:0">Ver progreso</button>
+  </div>
+  <div class="tabs">
+    <div class="tab active" id="tab-wizard" onclick="showMain('wizard')">✨ Configurar</div>
+    <div class="tab" id="tab-output" onclick="showMain('output')">📚 Asignatura <span class="tab-dot" id="outDot"></span></div>
+    <div class="tab" id="tab-agents" onclick="showMain('agents')">🤖 Agentes</div>
+  </div>
+  <!-- WIZARD -->
+  <div class="tc active content" id="tc-wizard">
+    <div class="apibox">
+      <div class="apibox-head"><span style="font-size:16px">🔑</span><h3>OpenAI API Key</h3>
+        <span style="margin-left:auto;font-size:11px;background:rgba(5,150,105,.15);color:var(--teal);padding:2px 8px;border-radius:20px;border:1px solid rgba(5,150,105,.3)">🔒 Solo en tu navegador</span>
       </div>
-      <div class="progress mt-2">
-        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%"></div>
+      <div class="apibox-row">
+        <div class="fld" style="flex:1"><label>API Key <span class="req">*</span></label><input type="password" id="apiKey" placeholder="sk-..." oninput="onKeyChange()"></div>
+        <button class="btn" onclick="toggleKeyVis()">👁</button>
+        <button class="btn" id="btnVerifyKey" onclick="verifyApiKey()" title="Verificar que la key funciona">✓ Verificar</button>
+        <button class="btn btn-danger" id="btnForget" onclick="forgetKey()" style="display:none">🗑</button>
+      </div>
+      <div id="keyStatus" style="display:none;font-size:11px;margin-top:5px;display:none;align-items:center;gap:5px"></div>
+      <div class="privacy">✅ Las llamadas van directamente de tu navegador a api.openai.com</div>
+      <div style="margin-top:6px;display:flex;align-items:center;gap:7px">
+        <input type="checkbox" id="saveKey" style="width:13px;height:13px;accent-color:var(--accent);cursor:pointer" onchange="onSaveKey()">
+        <label for="saveKey" style="font-size:12px;color:var(--t3);cursor:pointer;font-weight:400">Guardar en localStorage</label>
       </div>
     </div>
+    <div class="wiz-bar">
+      <div class="wst active" id="ws1" onclick="goW(1)"><div class="wst-dot">1</div>Fuentes</div>
+      <div class="wst" id="ws2" onclick="goW(2)"><div class="wst-dot">2</div>Asignatura</div>
+      <div class="wst" id="ws3" onclick="goW(3)"><div class="wst-dot">3</div>Opciones</div>
+      <div class="wst" id="ws4" onclick="maybeW4()"><div class="wst-dot">4</div>Revisar temas</div>
+      <div class="wst" id="ws5" onclick="goW(5)"><div class="wst-dot">5</div>Generar</div>
+    </div>
+    <!-- STEP 1 -->
+    <div class="wp active" id="wp1">
+      <div class="sh">📂 Fuentes de contenido</div>
+      <div class="ibox ibox-blue"><span>ℹ️</span><span>Sube todos los ficheros que necesites (TXT, PDF, MD, HTML, DOC, CSV). Se guardan completos en <strong>IndexedDB local</strong> sin límite de tamaño.</span></div>
+      <div class="upzone" id="upzone" ondragover="onDrag(event,true)" ondragleave="onDrag(event,false)" ondrop="onDrop(event)">
+        <input type="file" id="fileInput" multiple accept=".txt,.pdf,.md,.html,.doc,.docx,.csv,.json" onchange="onFiles(event)">
+        <div style="font-size:28px;margin-bottom:7px">📎</div>
+        <div style="font-size:14px;font-weight:500;margin-bottom:3px">Arrastra ficheros aquí o haz clic</div>
+        <div style="font-size:12px;color:var(--t3)">TXT · PDF · MD · HTML · DOC · CSV — sin límite · IndexedDB</div>
+      </div>
+      <div class="flist" id="flist"></div>
+      <div class="wiz-nav"><span class="hint" id="fcHint">0 ficheros</span><button class="btn btn-primary" onclick="goW(2)">Siguiente →</button></div>
+    </div>
+    <!-- STEP 2 -->
+    <div class="wp" id="wp2">
+      <div class="sh">🎓 Define tu asignatura</div>
+      <div class="fg">
+        <div class="fld ff"><label>Nombre de la asignatura <span class="req">*</span></label>
+          <input type="text" id="asigName" placeholder="Ej: Termodinámica, Cálculo I, Bioquímica..."
+            style="font-size:15px;padding:11px 13px"
+            oninput="validateField(this,'asigNameErr','El nombre es obligatorio')"
+            onblur="validateField(this,'asigNameErr','El nombre es obligatorio')">
+          <span id="asigNameErr" style="display:none;font-size:11px;color:var(--red);margin-top:3px"></span>
+        </div>
+        <div class="fld ff">
+          <label>Número de temas (cada uno = 1 h teórica) <span class="req">*</span></label>
+          <div class="slrow">
+            <input type="range" id="numTemas" min="4" max="20" step="1" value="10" oninput="document.getElementById('nTV').textContent=this.value+' temas ('+this.value+' h teóricas)'">
+            <span class="slval" id="nTV">10 temas (10 h teóricas)</span>
+          </div>
+          <span class="hint">El Planner propondrá este número. Podrás desactivar los que no quieras.</span>
+        </div>
+        <div class="fld">
+          <label>Apartados por tema</label>
+          <div class="slrow">
+            <input type="range" id="numApts" min="2" max="6" step="1" value="4" oninput="document.getElementById('nAV').textContent=this.value+' apartados'">
+            <span class="slval" id="nAV">4 apartados</span>
+          </div>
+        </div>
+        <div class="fld">
+          <label>Nivel académico</label>
+          <select id="nivel">
+            <option value="bachillerato">Bachillerato / FP</option>
+            <option value="grado1">Grado universitario 1º-2º</option>
+            <option value="grado3" selected>Grado universitario 3º-4º</option>
+            <option value="master">Máster / Posgrado</option>
+            <option value="doctorado">Doctorado</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label>Idioma</label>
+          <select id="lang">
+            <option value="español" selected>Español</option>
+            <option value="inglés">English</option>
+            <option value="catalán">Català</option>
+            <option value="francés">Français</option>
+          </select>
+        </div>
+        <div class="fld ff"><label>Instrucciones especiales</label>
+          <input type="text" id="instruc" placeholder="Ej: énfasis en aplicaciones industriales, incluye ejemplos resueltos..."></div>
+      </div>
+      <div class="wiz-nav"><button class="btn" onclick="goW(1)">← Atrás</button><button class="btn btn-primary" onclick="validateAndGoW3()">Opciones →</button></div>
+    </div>
+    <!-- STEP 3 -->
+    <div class="wp" id="wp3">
+      <div class="sh">🤖 Contenido por apartado</div>
+      <div>
+        <div class="togrow"><div><div class="tl">📖 Desarrollo teórico</div><div class="ts">Explicación completa del contenido de cada apartado</div></div><div class="tsw on" id="tog-teoria" onclick="this.classList.toggle('on')"></div></div>
+        <div class="togrow"><div><div class="tl">📐 Fórmulas KaTeX</div><div class="ts">Fórmulas renderizadas con KaTeX — esencial para ciencias</div></div><div class="tsw on" id="tog-latex" onclick="this.classList.toggle('on')"></div></div>
+        <div class="togrow"><div><div class="tl">❓ Test tipo test (5 preguntas / apartado)</div><div class="ts">Con 4 opciones, respuesta correcta y explicación</div></div><div class="tsw on" id="tog-test" onclick="this.classList.toggle('on')"></div></div>
+        <div class="togrow"><div><div class="tl">🗺️ Mapa conceptual SVG</div><div class="ts">Diagrama visual de conceptos por tema</div></div><div class="tsw on" id="tog-mapa" onclick="this.classList.toggle('on')"></div></div>
+        <div class="togrow"><div><div class="tl">💡 Ejemplos resueltos</div><div class="ts">Un ejemplo práctico por apartado</div></div><div class="tsw" id="tog-ej" onclick="this.classList.toggle('on')"></div></div>
+        <div class="togrow"><div><div class="tl">🔗 Conexiones entre temas</div><div class="ts">Prerrequisitos y temas siguientes</div></div><div class="tsw" id="tog-conx" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="sh">📋 Programa</div>
+      <div>
+        <div class="togrow"><div><div class="tl">📄 Ficha / guía docente</div><div class="ts">Objetivos, competencias, metodología y evaluación</div></div><div class="tsw on" id="tog-guia" onclick="this.classList.toggle('on')"></div></div>
+        <div class="togrow"><div><div class="tl">📚 Bibliografía APA</div><div class="ts">Referencias inferidas del material subido</div></div><div class="tsw on" id="tog-bib" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="sh">📏 Densidad del contenido</div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:12px 14px">
+        <div class="slrow" style="margin-bottom:6px">
+          <input type="range" id="wordCount" min="1" max="3" step="1" value="2"
+            oninput="updateWordCountLabel(this.value);saveWizSettings()">
+          <span class="slval" id="wordCountV" style="min-width:160px">Estándar (~300 palabras)</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);padding:0 2px">
+          <span>Conciso (~150)</span><span>Estándar (~300)</span><span>Detallado (~500)</span>
+        </div>
+        <div style="font-size:11px;color:var(--t3);margin-top:6px">Controla la extensión del desarrollo teórico de cada apartado</div>
+      </div>
+      <div class="wiz-nav"><button class="btn" onclick="goW(2)">← Atrás</button><button class="btn btn-violet" id="btnProponer" onclick="proposeTopics()">✨ Proponer temas →</button></div>
+    </div>
+    <!-- STEP 4 -->
+    <div class="wp" id="wp4">
+      <div id="topicLoading" class="skeleton">
+        <div class="spin"></div>
+        <div style="font-size:14px;font-weight:500;color:var(--t2);margin-bottom:4px">Generando propuesta de temas...</div>
+        <div style="font-size:12px;color:var(--t3)">El agente <strong>Planner</strong> está analizando tus fuentes</div>
+        <div style="margin-top:10px;font-size:11px;color:var(--t3);background:#f3f4f6;border-radius:6px;padding:6px 10px;display:inline-block">⏱ Normalmente tarda entre 5 y 15 segundos</div>
+        <div id="planElapsed" style="font-size:11px;color:var(--accent);margin-top:6px"></div>
+      </div>
+      <div id="topicReady" style="display:none">
+        <div class="ibox ibox-violet"><span>✏️</span><span>Activa/desactiva temas con un clic. Edita títulos y apartados antes de generar.</span></div>
+        <div class="topic-toolbar">
+          <div class="topic-toolbar-count"><strong id="selN">10</strong> de <span id="selT">10</span> temas · <span id="selH">10</span> h</div>
+          <button class="btn btn-sm" onclick="selAll(true)">✅ Todos</button>
+          <button class="btn btn-sm" onclick="selAll(false)">☐ Ninguno</button>
+          <button class="btn btn-sm btn-amber" onclick="proposeTopics()">🔄 Re-proponer</button>
+        </div>
+        <div class="topic-list" id="topicList"></div>
+      </div>
+      <div class="wiz-nav" id="w4nav" style="display:none">
+        <button class="btn" onclick="goW(3)">← Atrás</button>
+        <button class="btn btn-primary" id="btnToStep5" onclick="goW(5)">Ver resumen →</button>
+      </div>
+    </div>
+    <!-- STEP 5 -->
+    <div class="wp" id="wp5">
+      <div class="sh">💰 Estimación</div>
+      <div class="costbox">
+        <div class="ci"><div class="cv" id="eT">10</div><div class="cl">Temas</div></div>
+        <div class="cs"></div>
+        <div class="ci"><div class="cv" id="eA">4</div><div class="cl">Apartados/tema</div></div>
+        <div class="cs"></div>
+        <div class="ci"><div class="cv" id="eC">~40</div><div class="cl">Llamadas API</div></div>
+        <div class="cs"></div>
+        <div class="ci"><div class="cv" id="eCo">~$0.12</div><div class="cl">Coste est.</div></div>
+        <div class="cw">⚡ gpt-4o-mini · contexto enriquecido por tema · reintentos automáticos</div>
+      </div>
+      <div class="sh">🚦 Pipeline</div>
+      <div class="phases">
+        <div class="ph" id="ph1"><div class="pn">1</div>Guía</div>
+        <div class="ph" id="ph2"><div class="pn">2</div>Desarrollo</div>
+        <div class="ph" id="ph3"><div class="pn">3</div>Tests</div>
+        <div class="ph" id="ph4"><div class="pn">4</div>Mapas</div>
+        <div class="ph" id="ph5"><div class="pn">5</div>Biblio</div>
+      </div>
+      <!-- Progreso detallado por tema -->
+      <div class="prog-detail" id="progDetail">
+        <div style="font-size:11px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px" id="progPhaseLabel">Iniciando...</div>
+        <div id="tprogList"></div>
+        <div class="pb"><div class="pf" id="pfill"></div></div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+        <div class="logtog" onclick="toggleLog()" style="flex:1">▶ Log técnico <span id="logCnt" style="color:var(--accent)"></span></div>
+        <button id="btnPause" onclick="togglePause()" class="btn btn-sm btn-amber" style="display:none">⏸ Pausar</button>
+      </div>
+      <div class="logbox" id="logbox"></div>
+      <div class="wiz-nav">
+        <button class="btn" onclick="goW(4)">← Atrás</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-amber" id="btnTest1" onclick="startGeneration(true)" title="Genera solo el primer tema seleccionado para ver el resultado antes de comprometer todo">🧪 Probar Tema 1</button>
+          <button class="btn btn-primary" id="btnGenW" onclick="startGeneration(false)" style="padding:9px 20px;font-size:14px">▶ Generar asignatura</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /wizard -->
 
-    <!-- Resultados -->
-    <div id="resultsCard" class="card d-none">
-      <div class="card-header">
-        <ul class="nav nav-tabs card-header-tabs" id="topicTabs" role="tablist"></ul>
+  <!-- OUTPUT -->
+  <div class="tc content" id="tc-output">
+    <div id="outEmpty" style="text-align:center;padding:56px 20px;color:var(--t3)">
+      <div style="font-size:44px;margin-bottom:9px">🎓</div>
+      <div style="font-family:var(--serif);font-size:16px;color:var(--t2)">La asignatura aparecerá aquí</div>
+      <div style="font-size:13px;margin-top:4px">Configura y pulsa <strong>Generar</strong></div>
+    </div>
+    <div id="outContent" style="display:none">
+      <div id="outHdr"></div>
+      <div class="stats" id="outStats" style="display:none"></div>
+      <div id="outExportRow" style="display:none;display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px"></div>
+      <div class="search-bar" id="searchBar" style="display:none">
+        <span style="font-size:14px;color:var(--t3)">🔍</span>
+        <input type="text" id="searchInp" placeholder="Buscar en la asignatura..." oninput="doSearch(this.value)">
+        <span class="search-count" id="searchCount"></span>
+        <button class="search-clear" onclick="clearSearch()" id="searchClear" style="display:none">✕ Limpiar</button>
       </div>
-      <div class="card-body">
-        <div id="topicContent" class="tab-content"></div>
-      </div>
+      <div id="outGuia"></div>
+      <div id="outTemas"></div>
+      <div id="outBib"></div>
     </div>
   </div>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- jsMind JS -->
-  <script src="https://unpkg.com/jsmind@0.9.1/es6/jsmind.js"></script>
-  <!-- MathJax -->
-  <script>
-    MathJax = {
-      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
-      svg: { fontCache: 'global' }
+  <!-- AGENTS -->
+  <div class="tc content" id="tc-agents">
+    <div class="sh">🤖 Pipeline de agentes</div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#f7f8fa">
+          <th style="text-align:left;padding:7px 11px;color:var(--t3);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Agente</th>
+          <th style="text-align:left;padding:7px 11px;color:var(--t3);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Fase</th>
+          <th style="text-align:left;padding:7px 11px;color:var(--t3);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Función</th>
+        </tr></thead>
+        <tbody id="agentTb"></tbody>
+      </table>
+    </div>
+  </div>
+</div></div>
+<script>
+// ═══ AGENTS ═══════════════════════════════════════════
+const AGENTS=[
+  {id:'planner',  fase:'Pre-plan (paso 4)', badge:'b-a', fn:'Propone N temas con títulos y apartados; usa fragmentos de fuente relevantes por tema'},
+  {id:'guide',    fase:'1 – Guía',          badge:'b-r', fn:'Genera ficha docente: objetivos, competencias, metodología, evaluación'},
+  {id:'developer',fase:'2 – Desarrollo',    badge:'b-v', fn:'Desarrolla contenido de cada apartado usando contexto filtrado por tema'},
+  {id:'latex',    fase:'2 – Desarrollo',    badge:'b-v', fn:'Inserta fórmulas KaTeX $...$ y $$...$$ (renderizadas en el navegador)'},
+  {id:'quiz',     fase:'3 – Tests',         badge:'b-w', fn:'5 preguntas tipo test por apartado con respuesta y explicación'},
+  {id:'map',      fase:'4 – Mapas',         badge:'b-v', fn:'Mapa conceptual SVG con nodos central/primario/secundario'},
+  {id:'bib',      fase:'5 – Biblio',        badge:'b-a', fn:'Bibliografía APA inferida del material y los temas generados'},
+];
+const NIVEL={
+  bachillerato:'Bachillerato/FP — introductorio, sin matemáticas avanzadas',
+  grado1:'Grado universitario 1º-2º — rigor moderado',
+  grado3:'Grado universitario 3º-4º — formalismo completo',
+  master:'Máster/Posgrado — especialización, estado del arte',
+  doctorado:'Doctorado — frontera del conocimiento',
+};
+const HP=['Generando ficha docente...','Desarrollando temas...','Creando tests...','Generando mapas...','Compilando bibliografía...','¡Completado!'];
+
+// ═══ STATE ════════════════════════════════════════════
+let files=[], proposedPlan=null, topicSel=[], srcCache='';
+let isRunning=false, isPlanRunning=false, shouldStop=false;
+let generatedData=null;   // asignatura activa en memoria
+let currentHistId=null;   // id de la asignatura activa en historial
+let logLines=0;
+
+// ═══ INDEXEDDB ════════════════════════════════════════
+const DB_NAME='GeneratorDB', DB_VER=2;
+let _db=null;
+let _dbOpening=null; // evita abrir en paralelo
+
+function dbOpen(){
+  // Si la conexión existe y está abierta, la reutilizamos
+  if(_db && _db.version){
+    try{
+      // Pequeña prueba: si objectStoreNames es accesible, la conexión está viva
+      void _db.objectStoreNames;
+      return Promise.resolve(_db);
+    }catch(e){
+      // Conexión inválida, forzar reapertura
+      _db=null;
+    }
+  }
+  // Evitar aperturas paralelas
+  if(_dbOpening)return _dbOpening;
+  _dbOpening=new Promise((res,rej)=>{
+    const req=indexedDB.open(DB_NAME,DB_VER);
+    req.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains('kv'))    db.createObjectStore('kv',{keyPath:'k'});
+      if(!db.objectStoreNames.contains('files')) db.createObjectStore('files',{keyPath:'name'});
+      if(!db.objectStoreNames.contains('asigs')) db.createObjectStore('asigs',{keyPath:'id'});
     };
-  </script>
-  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    req.onsuccess=e=>{
+      _db=e.target.result;
+      // Si otra pestaña actualiza la BD, cerramos y forzamos reapertura en el próximo uso
+      _db.onversionchange=()=>{_db.close();_db=null;_dbOpening=null;};
+      // Si la conexión se cierra inesperadamente
+      _db.onclose=()=>{_db=null;_dbOpening=null;};
+      _dbOpening=null;
+      res(_db);
+    };
+    req.onerror=e=>{_dbOpening=null;rej(e.target.error);};
+    req.onblocked=()=>{console.warn('IDB blocked — otra pestaña tiene la BD abierta');};
+  });
+  return _dbOpening;
+}
 
-  <script>
-    (function() {
-      // ------------------- Estado global -------------------
-      const state = {
-        apiKey: '',
-        topics: [],           // cada topic: { title, sections: [{ title, content, questions: [] }], conceptMapData }
-        currentTopic: 0
-      };
+// Wrapper que reintenta una vez si la transacción falla por conexión inválida
+async function dbTx(stores, mode, fn){
+  let db;
+  try{
+    db=await dbOpen();
+    return await fn(db);
+  }catch(e){
+    if(e?.name==='InvalidStateError'||e?.message?.includes('transaction')){
+      // Forzar reapertura y reintentar una vez
+      _db=null;_dbOpening=null;
+      db=await dbOpen();
+      return await fn(db);
+    }
+    throw e;
+  }
+}
+async function dbSet(k,v){
+  return dbTx(['kv'],'readwrite',db=>new Promise((res,rej)=>{
+    const tx=db.transaction('kv','readwrite');
+    tx.objectStore('kv').put({k,v});
+    tx.oncomplete=res;tx.onerror=e=>rej(e.target.error);
+  }));
+}
+async function dbGet(k){
+  return dbTx(['kv'],'readonly',db=>new Promise((res,rej)=>{
+    const tx=db.transaction('kv','readonly');
+    const r=tx.objectStore('kv').get(k);
+    r.onsuccess=()=>res(r.result?.v??null);r.onerror=e=>rej(e.target.error);
+  }));
+}
+async function dbSaveFiles(arr){
+  return dbTx(['files'],'readwrite',db=>new Promise((res,rej)=>{
+    const tx=db.transaction('files','readwrite');
+    const st=tx.objectStore('files');
+    st.clear();arr.forEach(f=>st.put({name:f.name,size:f.size,text:f.text}));
+    tx.oncomplete=res;tx.onerror=e=>rej(e.target.error);
+  }));
+}
+async function dbLoadFiles(){
+  return dbTx(['files'],'readonly',db=>new Promise((res,rej)=>{
+    const tx=db.transaction('files','readonly');
+    const r=tx.objectStore('files').getAll();
+    r.onsuccess=()=>res(r.result||[]);r.onerror=e=>rej(e.target.error);
+  }));
+}
+async function dbSaveAsig(asig){
+  return dbTx(['asigs'],'readwrite',db=>new Promise((res,rej)=>{
+    const tx=db.transaction('asigs','readwrite');
+    tx.objectStore('asigs').put(asig);
+    tx.oncomplete=res;tx.onerror=e=>rej(e.target.error);
+  }));
+}
+async function dbLoadAllAsigs(){
+  return dbTx(['asigs'],'readonly',db=>new Promise((res,rej)=>{
+    const tx=db.transaction('asigs','readonly');
+    const r=tx.objectStore('asigs').getAll();
+    r.onsuccess=()=>res((r.result||[]).sort((a,b)=>b.savedAt-a.savedAt));
+    r.onerror=e=>rej(e.target.error);
+  }));
+}
+async function dbDelAsig(id){
+  return dbTx(['asigs'],'readwrite',db=>new Promise((res,rej)=>{
+    const tx=db.transaction('asigs','readwrite');
+    tx.objectStore('asigs').delete(id);
+    tx.oncomplete=res;tx.onerror=e=>rej(e.target.error);
+  }));
+}
+async function dbClearAll(){
+  return dbTx(['kv','files','asigs'],'readwrite',db=>new Promise((res,rej)=>{
+    const tx=db.transaction(['kv','files','asigs'],'readwrite');
+    tx.objectStore('kv').clear();
+    tx.objectStore('files').clear();
+    tx.objectStore('asigs').clear();
+    tx.oncomplete=res;tx.onerror=e=>rej(e.target.error);
+  }));
+}
+async function dbSizeMB(){
+  return dbTx(['kv','files','asigs'],'readonly',async db=>{
+    let bytes=0;
+    const sum=store=>new Promise(r=>{
+      const tx=db.transaction(store,'readonly');
+      const req=tx.objectStore(store).getAll();
+      req.onsuccess=()=>r(JSON.stringify(req.result||'').length*2);
+      req.onerror=()=>r(0);
+    });
+    for(const s of['kv','files','asigs'])bytes+=await sum(s);
+    return(bytes/1024/1024).toFixed(2);
+  });
+}
+const persist={
+  files:()=>dbSaveFiles(files),
+  plan:()=>dbSet('plan',proposedPlan),
+  topicsel:()=>dbSet('topicsel',topicSel),
+  wizSettings:()=>{
+    const s={
+      asigName:document.getElementById('asigName')?.value||'',
+      numTemas:document.getElementById('numTemas')?.value||'10',
+      numApts:document.getElementById('numApts')?.value||'4',
+      nivel:document.getElementById('nivel')?.value||'grado3',
+      lang:document.getElementById('lang')?.value||'español',
+      instruc:document.getElementById('instruc')?.value||'',
+      togTeoria:document.getElementById('tog-teoria')?.classList.contains('on')??true,
+      togLatex:document.getElementById('tog-latex')?.classList.contains('on')??true,
+      togTest:document.getElementById('tog-test')?.classList.contains('on')??true,
+      togMapa:document.getElementById('tog-mapa')?.classList.contains('on')??true,
+      togEj:document.getElementById('tog-ej')?.classList.contains('on')??false,
+      togConx:document.getElementById('tog-conx')?.classList.contains('on')??false,
+      togGuia:document.getElementById('tog-guia')?.classList.contains('on')??true,
+      togBib:document.getElementById('tog-bib')?.classList.contains('on')??true,
+      wordCount:document.getElementById('wordCount')?.value||'2',
+    };
+    return dbSet('wizSettings',s);
+  },
+};
+function saveWizSettings(){persist.wizSettings().catch(()=>{});}
+function restoreWizSettings(s){
+  if(!s)return;
+  if(s.asigName){const el=document.getElementById('asigName');if(el)el.value=s.asigName;}
+  if(s.numTemas){const el=document.getElementById('numTemas');if(el){el.value=s.numTemas;const v=document.getElementById('nTV');if(v)v.textContent=s.numTemas+' temas ('+s.numTemas+' h teóricas)';}}
+  if(s.numApts){const el=document.getElementById('numApts');if(el){el.value=s.numApts;const v=document.getElementById('nAV');if(v)v.textContent=s.numApts+' apartados';}}
+  if(s.nivel){const el=document.getElementById('nivel');if(el)el.value=s.nivel;}
+  if(s.lang){const el=document.getElementById('lang');if(el)el.value=s.lang;}
+  if(s.instruc){const el=document.getElementById('instruc');if(el)el.value=s.instruc;}
+  const tog=(id,val)=>{const el=document.getElementById(id);if(el){el.classList.toggle('on',val);}};
+  tog('tog-teoria',s.togTeoria??true);tog('tog-latex',s.togLatex??true);
+  tog('tog-test',s.togTest??true);tog('tog-mapa',s.togMapa??true);
+  tog('tog-ej',s.togEj??false);tog('tog-conx',s.togConx??false);
+  tog('tog-guia',s.togGuia??true);tog('tog-bib',s.togBib??true);
+  if(s.wordCount){const el=document.getElementById('wordCount');if(el){el.value=s.wordCount;updateWordCountLabel(s.wordCount);}}
+}
 
-      // ------------------- Utilidades -------------------
-      function showProgress(show) {
-        document.getElementById('progressCard').classList.toggle('d-none', !show);
+// ── smartNextStep: topbar button context-aware ─────────
+function smartNextStep(){
+  if(isRunning){showMain('wizard');goW(5);return;}
+  // Determina en qué paso estamos y dónde debe ir
+  const asigName=document.getElementById('asigName')?.value?.trim();
+  if(files.length===0){showMain('wizard');goW(1);return;}
+  if(!asigName){showMain('wizard');goW(2);document.getElementById('asigName')?.focus();return;}
+  if(!proposedPlan){showMain('wizard');goW(3);return;}
+  if(topicSel.filter(Boolean).length===0){showMain('wizard');goW(4);return;}
+  if(!generatedData?.temas?.length){showMain('wizard');goW(5);return;}
+  // Si ya hay asignatura, va al output
+  showMain('output');
+}
+function updateTopbarBtn(){
+  const btn=document.getElementById('btnGen');if(!btn)return;
+  if(isRunning){btn.textContent='⏳ Generando...';btn.disabled=true;return;}
+  btn.disabled=false;
+  const asigName=document.getElementById('asigName')?.value?.trim();
+  if(files.length===0)              {btn.textContent='① Sube fuentes';return;}
+  if(!asigName)                     {btn.textContent='② Nombre asignatura';return;}
+  if(!proposedPlan)                 {btn.textContent='③ Proponer temas';return;}
+  if(topicSel.filter(Boolean).length===0){btn.textContent='④ Selecciona temas';return;}
+  if(!generatedData?.temas?.length) {btn.textContent='▶ Generar';return;}
+  btn.textContent='📚 Ver asignatura';
+}
+
+// ── validateField: inline validation ──────────────────
+function validateField(input,errId,msg){
+  const err=document.getElementById(errId);if(!err)return true;
+  const ok=input.value.trim().length>0;
+  err.textContent=ok?'':msg;
+  err.style.display=ok?'none':'block';
+  input.style.borderColor=ok?'':'var(--red)';
+  return ok;
+}
+function validateAndGoW3(){
+  const ok=validateField(document.getElementById('asigName'),'asigNameErr','El nombre de la asignatura es obligatorio');
+  if(ok)goW(3);
+}
+
+// ── verifyApiKey ───────────────────────────────────────
+async function verifyApiKey(){
+  const k=document.getElementById('apiKey').value.trim();
+  if(!k){showKeyStatus('error','Introduce una API key primero');return;}
+  const btn=document.getElementById('btnVerifyKey');
+  if(btn){btn.disabled=true;btn.textContent='Verificando...';}
+  showKeyStatus('loading','Verificando con OpenAI...');
+  try{
+    const r=await fetch('https://api.openai.com/v1/models',{headers:{'Authorization':'Bearer '+k}});
+    if(r.ok){
+      showKeyStatus('ok','✅ API key válida y activa');
+    } else {
+      const e=await r.json().catch(()=>({}));
+      const msg=e.error?.message||'HTTP '+r.status;
+      if(r.status===401) showKeyStatus('error','❌ Key incorrecta o revocada');
+      else if(r.status===429) showKeyStatus('warn','⚠️ Key válida pero rate limit activo');
+      else showKeyStatus('error','❌ Error: '+msg);
+    }
+  }catch(e){
+    showKeyStatus('error','❌ Sin conexión o key inválida');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='✓ Verificar';}
+  }
+}
+function showKeyStatus(type,msg){
+  const el=document.getElementById('keyStatus');if(!el)return;
+  const colors={ok:'var(--teal)',error:'var(--red)',warn:'var(--amber)',loading:'var(--t3)'};
+  el.style.display='flex';
+  el.style.color=colors[type]||'var(--t2)';
+  el.textContent=msg;
+  if(type==='ok')setTimeout(()=>{el.style.display='none';},4000);
+}
+
+// ── Gen banner (fix 4: progress visible from any tab) ──
+function showGenBanner(visible,pct,txt){
+  const b=document.getElementById('genBanner');if(!b)return;
+  b.style.display=visible?'flex':'none';
+  if(txt){const t=document.getElementById('genBannerTxt');if(t)t.textContent=txt;}
+  if(pct!==undefined){const p=document.getElementById('genBannerPct');if(p)p.textContent=pct+'%';}
+}
+
+// ── Elapsed timer for plan generation (fix 7) ──────────
+let _planTimer=null;
+function startPlanTimer(){
+  const el=document.getElementById('planElapsed');if(!el)return;
+  let s=0;
+  _planTimer=setInterval(()=>{s++;el.textContent=`${s}s transcurridos`;},1000);
+}
+function stopPlanTimer(){
+  if(_planTimer){clearInterval(_planTimer);_planTimer=null;}
+  const el=document.getElementById('planElapsed');if(el)el.textContent='';
+}
+
+// ═══ INIT ═════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',async()=>{
+  const k=localStorage.getItem('cg_key');
+  if(k){document.getElementById('apiKey').value=k;document.getElementById('saveKey').checked=true;document.getElementById('btnForget').style.display='';updateAv(k);}
+  buildAgentTable();
+  // Hook wizard settings persistence on all relevant inputs
+  ['asigName','numTemas','numApts','nivel','lang','instruc','wordCount'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.addEventListener('input',()=>saveWizSettings());
+  });
+  ['tog-teoria','tog-latex','tog-test','tog-mapa','tog-ej','tog-conx','tog-guia','tog-bib'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){const orig=el.onclick;el.onclick=function(){orig?.call(this);saveWizSettings();};}
+  });
+  try{
+    const savedFiles=await dbLoadFiles();
+    if(savedFiles.length>0){files=savedFiles;renderFiles();}
+    // Restore wizard settings (fix 6)
+    const savedWiz=await dbGet('wizSettings');
+    if(savedWiz)restoreWizSettings(savedWiz);
+    const savedPlan=await dbGet('plan');
+    if(savedPlan){
+      proposedPlan=savedPlan;
+      topicSel=(await dbGet('topicsel'))||(savedPlan.temas||[]).map(()=>true);
+      renderTopicCards();
+      document.getElementById('topicLoading').style.display='none';
+      document.getElementById('topicReady').style.display='block';
+      document.getElementById('w4nav').style.display='flex';
+      [1,2,3].forEach(i=>{const w=document.getElementById('ws'+i);if(w){w.classList.remove('active');w.classList.add('done');}});
+      document.getElementById('ws4').classList.add('done');
+      updateSelCount();
+    }
+    await refreshHistorial();
+    await updateStorageUI();
+    updateTopbarBtn();
+  }catch(e){console.warn('IDB init:',e);}
+});
+
+// ═══ NAV ══════════════════════════════════════════════
+const PANEL_META={
+  wizard:{t:'Nueva asignatura',s:'Sube tus fuentes y genera la asignatura completa'},
+  output:{t:'Asignatura activa',s:'Navega por temas, tests y mapas conceptuales'},
+  agents:{t:'Agentes del pipeline',s:'Los agentes que construyen la asignatura en cadena'},
+};
+function showMain(n){
+  ['wizard','output','agents'].forEach(t=>{
+    const tc=document.getElementById('tc-'+t);if(tc)tc.classList.remove('active');
+    const tb=document.getElementById('tab-'+t);if(tb)tb.classList.remove('active');
+  });
+  document.querySelectorAll('.ni').forEach(el=>el.classList.remove('active'));
+  const tc=document.getElementById('tc-'+n);if(tc)tc.classList.add('active');
+  const tb=document.getElementById('tab-'+n);if(tb)tb.classList.add('active');
+  document.querySelectorAll('.ni').forEach(el=>{if(el.onclick&&el.onclick.toString().includes("'"+n+"'"))el.classList.add('active');});
+  const m=PANEL_META[n]||{};
+  document.getElementById('tbarTitle').textContent=m.t||n;
+  document.getElementById('tbarSub').textContent=m.s||'';
+}
+function goW(s){
+  [1,2,3,4,5].forEach(i=>{
+    const wp=document.getElementById('wp'+i);if(wp)wp.classList.remove('active');
+    const ws=document.getElementById('ws'+i);if(!ws)return;
+    ws.classList.remove('active','done');if(i<s)ws.classList.add('done');
+  });
+  const wp=document.getElementById('wp'+s);if(wp)wp.classList.add('active');
+  const ws=document.getElementById('ws'+s);if(ws)ws.classList.add('active');
+  if(s===5)updateEstimate();
+}
+function maybeW4(){if(proposedPlan)goW(4);}
+
+// ═══ API KEY ══════════════════════════════════════════
+function onKeyChange(){const v=document.getElementById('apiKey').value.trim();document.getElementById('btnForget').style.display=v?'':'none';updateAv(v);if(document.getElementById('saveKey').checked)localStorage.setItem('cg_key',v);}
+function toggleKeyVis(){const e=document.getElementById('apiKey');e.type=e.type==='password'?'text':'password';}
+function forgetKey(){document.getElementById('apiKey').value='';document.getElementById('btnForget').style.display='none';localStorage.removeItem('cg_key');updateAv('');}
+function onSaveKey(){const v=document.getElementById('apiKey').value.trim();if(document.getElementById('saveKey').checked)localStorage.setItem('cg_key',v);else localStorage.removeItem('cg_key');}
+function updateAv(k){const av=document.getElementById('avI'),al=document.getElementById('avL');if(k){av.textContent=k.slice(3,5).toUpperCase();al.textContent='sk-…'+k.slice(-4);}else{av.textContent='--';al.textContent='Sin configurar';}}
+
+// ═══ FILES ════════════════════════════════════════════
+function onDrag(e,over){e.preventDefault();document.getElementById('upzone').classList[over?'add':'remove']('drag');}
+function onDrop(e){e.preventDefault();document.getElementById('upzone').classList.remove('drag');handleFiles([...e.dataTransfer.files]);}
+function onFiles(e){handleFiles([...e.target.files]);}
+async function handleFiles(list){
+  for(const f of list){
+    if(files.find(x=>x.name===f.name))continue;
+    const text=await new Promise(r=>{const fr=new FileReader();fr.onload=e=>r(e.target.result);fr.readAsText(f,'UTF-8');});
+    files.push({name:f.name,size:f.size,text});
+  }
+  renderFiles();srcCache='';invalidateSrcCache();
+  persist.files().then(updateStorageUI).catch(e=>console.warn('IDB files:',e));
+  updateTopbarBtn();
+}
+function removeFile(i){files.splice(i,1);renderFiles();invalidateSrcCache();persist.files().then(updateStorageUI).catch(()=>{});updateTopbarBtn();}
+function renderFiles(){
+  const list=document.getElementById('flist');list.innerHTML='';
+  files.forEach((f,i)=>{
+    const ext=f.name.split('.').pop().toUpperCase();
+    const ic={PDF:'📕',TXT:'📄',MD:'📝',HTML:'🌐',DOC:'📘',DOCX:'📘',CSV:'📊',JSON:'📋'}[ext]||'📄';
+    const d=document.createElement('div');d.className='fi anim';
+    d.innerHTML=`<div class="fi-ico">${ic}</div><div class="fi-name">${f.name}</div><div class="fi-sz">${(f.size/1024).toFixed(1)} KB</div><button class="fi-del" onclick="removeFile(${i})">✕</button>`;
+    list.appendChild(d);
+  });
+  const totalKB=files.reduce((a,f)=>a+f.size,0)/1024;
+  const ts=totalKB>1024?(totalKB/1024).toFixed(1)+' MB':totalKB.toFixed(0)+' KB';
+  document.getElementById('fcHint').textContent=files.length===0?'Sin ficheros':`${files.length} fichero${files.length>1?'s':''} · ${ts}`;
+}
+
+// getSrc with per-topic cache (fix #6: each tema title gets its own cached slice)
+const _srcCache={};
+function getSrc(temaTitle=''){
+  const cacheKey=temaTitle||'__all__';
+  if(_srcCache[cacheKey])return _srcCache[cacheKey];
+  const LIMIT=26000;
+  let t=files.map(f=>`=== ${f.name} ===\n${f.text}`).join('\n\n');
+  if(temaTitle && t.length>LIMIT){
+    const words=temaTitle.toLowerCase().split(/\s+/).filter(w=>w.length>3);
+    const paras=t.split(/\n{2,}/);
+    const scored=paras.map(p=>({p,s:words.filter(w=>p.toLowerCase().includes(w)).length}));
+    scored.sort((a,b)=>b.s-a.s);
+    let filtered='';
+    for(const {p} of scored){if((filtered+p).length>LIMIT)break;filtered+=p+'\n\n';}
+    if(filtered.length>1000)t=filtered;
+  }
+  if(t.length>LIMIT)t=t.slice(0,LIMIT)+'\n[...contenido adicional en IndexedDB...]';
+  _srcCache[cacheKey]=t;
+  return t;
+}
+// Invalidate cache when files change
+function invalidateSrcCache(){Object.keys(_srcCache).forEach(k=>delete _srcCache[k]);}
+
+function updateWordCountLabel(v){
+  const labels={1:'Conciso (~150 palabras)',2:'Estándar (~300 palabras)',3:'Detallado (~500 palabras)'};
+  const el=document.getElementById('wordCountV');if(el)el.textContent=labels[v]||'';
+}
+
+// ═══ LOG ══════════════════════════════════════════════
+function log(msg,type=''){const b=document.getElementById('logbox');if(!b)return;const d=document.createElement('div');d.className='ll'+(type?' '+type:'');d.textContent=new Date().toLocaleTimeString('es')+'  '+msg;b.appendChild(d);b.scrollTop=b.scrollHeight;logLines++;const c=document.getElementById('logCnt');if(c)c.textContent='('+logLines+')';}
+function toggleLog(){document.getElementById('logbox').classList.toggle('open');}
+
+// ═══ ESTIMATE ═════════════════════════════════════════
+function updateEstimate(){
+  const nt=topicSel.length>0?topicSel.filter(Boolean).length:parseInt(document.getElementById('numTemas')?.value||10);
+  const na=parseInt(document.getElementById('numApts')?.value||4);
+  const test=document.getElementById('tog-test')?.classList.contains('on');
+  const mapa=document.getElementById('tog-mapa')?.classList.contains('on');
+  const calls=nt*na+(test?nt*na:0)+(mapa?nt:0)+2;
+  if(document.getElementById('eT'))document.getElementById('eT').textContent=nt;
+  if(document.getElementById('eA'))document.getElementById('eA').textContent=na;
+  if(document.getElementById('eC'))document.getElementById('eC').textContent='~'+calls;
+  if(document.getElementById('eCo'))document.getElementById('eCo').textContent='~$'+(calls*.003).toFixed(2);
+}
+
+// ═══ STOP ═════════════════════════════════════════════
+function stopGen(){shouldStop=true;log('⏹ Parando tras la llamada actual...','w');}
+
+// ═══ AGENTS TABLE ═════════════════════════════════════
+function buildAgentTable(){const tb=document.getElementById('agentTb');if(!tb)return;tb.innerHTML=AGENTS.map(a=>`<tr><td style="padding:7px 11px;border-bottom:1px solid var(--border)"><span class="badge ${a.badge}">${a.id}</span></td><td style="padding:7px 11px;border-bottom:1px solid var(--border);color:var(--t3);font-size:12px">${a.fase}</td><td style="padding:7px 11px;border-bottom:1px solid var(--border);color:var(--t2)">${a.fn}</td></tr>`).join('');}
+
+// ═══ OPENAI — con retry automático ════════════════════
+async function callGPT(sys,usr,max=2000,attempt=0){
+  if(shouldStop)throw new Error('__STOP__');
+  const k=document.getElementById('apiKey').value.trim();
+  if(!k)throw new Error('API key no configurada.');
+  const r=await fetch('https://api.openai.com/v1/chat/completions',{
+    method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+k},
+    body:JSON.stringify({model:'gpt-4o-mini',max_tokens:max,temperature:0.7,
+      messages:[{role:'system',content:sys},{role:'user',content:usr}]})
+  });
+  if(!r.ok){
+    const e=await r.json().catch(()=>({}));
+    const msg=e.error?.message||'HTTP '+r.status;
+    if((r.status===429||r.status>=500)&&attempt<3){
+      const wait=Math.pow(2,attempt+1)*1500;
+      log(`⚠️ ${msg} — reintentando en ${wait/1000}s (intento ${attempt+1}/3)`,'w');
+      await new Promise(res=>setTimeout(res,wait));
+      return callGPT(sys,usr,max,attempt+1);
+    }
+    throw new Error(msg);
+  }
+  return(await r.json()).choices[0].message.content.trim();
+}
+async function callJSON(sys,usr,max=3000){
+  const raw=await callGPT(sys,usr,max);
+  const clean=raw.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
+  try{return JSON.parse(clean);}catch{
+    const m=clean.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+    if(m)try{return JSON.parse(m[1]);}catch{}
+    // un reintento extra si el JSON está malformado
+    log('⚠️ JSON malformado, reintentando...','w');
+    const raw2=await callGPT(sys,usr+'\n\nIMPORTANTE: Responde ÚNICAMENTE con JSON válido, sin texto adicional.',max);
+    const c2=raw2.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
+    return JSON.parse(c2);
+  }
+}
+
+// ═══ PROPOSE TOPICS (paso 3→4) ════════════════════════
+async function proposeTopics(){
+  const k=document.getElementById('apiKey').value.trim();
+  if(!k){alert('Introduce tu API key.');return;}
+  if(files.length===0){alert('Sube al menos un fichero.');goW(1);return;}
+  const asigName=document.getElementById('asigName').value.trim();
+  if(!asigName){alert('Escribe el nombre de la asignatura.');goW(2);return;}
+  isPlanRunning=true;
+  document.getElementById('btnProponer').disabled=true;
+  document.getElementById('btnProponer').textContent='⏳ Generando...';
+  goW(4);
+  document.getElementById('topicLoading').style.display='block';
+  document.getElementById('topicReady').style.display='none';
+  document.getElementById('w4nav').style.display='none';
+  startPlanTimer();
+  const nt=parseInt(document.getElementById('numTemas').value);
+  const na=parseInt(document.getElementById('numApts').value);
+  const nd=NIVEL[document.getElementById('nivel').value]||'';
+  const lang=document.getElementById('lang').value;
+  const instruc=document.getElementById('instruc').value.trim();
+  try{
+    const plan=await callJSON(
+      `Eres el agente Planner. Diseña el programa docente con exactamente ${nt} temas de 1h lectiva y ${na} apartados cada uno. SOLO JSON puro.`,
+      `ASIGNATURA: ${asigName}\nNIVEL: ${nd}\nIDIOMA: ${lang}\nTEMAS: ${nt}\nAPARTADOS: ${na}${instruc?'\nINSTRUCCIONES: '+instruc:''}
+MATERIAL:\n${getSrc()}
+JSON exacto:{"asignatura":"${asigName}","creditos":${nt},"nivel":"${nd}","descripcion":"2-3 frases","objetivos":["o1","o2","o3"],"competencias":["c1","c2"],"temas":[{"numero":1,"titulo":"Título","descripcion":"una frase","apartados":[{"n":1,"titulo":"Apt 1.1"}]}]}`,4000);
+    proposedPlan=plan;
+    topicSel=(plan.temas||[]).map(()=>true);
+    persist.plan().then(updateStorageUI).catch(()=>{});
+    persist.topicsel().catch(()=>{});
+    renderTopicCards();
+    document.getElementById('topicLoading').style.display='none';
+    document.getElementById('topicReady').style.display='block';
+    document.getElementById('w4nav').style.display='flex';
+    [1,2,3,4].forEach(i=>{const w=document.getElementById('ws'+i);if(w){w.classList.remove('active');w.classList.add('done');}});
+    document.getElementById('ws4').classList.add('active');
+    updateSelCount();
+  }catch(e){
+    document.getElementById('topicLoading').innerHTML=`<div style="font-size:24px;margin-bottom:8px">❌</div><div style="font-size:14px;font-weight:500;color:var(--red);margin-bottom:3px">Error</div><div style="font-size:12px;color:var(--t2);margin-bottom:12px">${e.message}</div><button class="btn btn-primary" onclick="proposeTopics()">🔄 Reintentar</button>`;
+  }finally{
+    isPlanRunning=false;
+    stopPlanTimer();
+    document.getElementById('btnProponer').disabled=false;
+    document.getElementById('btnProponer').textContent='✨ Proponer temas →';
+    updateTopbarBtn();
+  }
+}
+
+// ═══ TOPIC CARDS ══════════════════════════════════════
+function renderTopicCards(){
+  const list=document.getElementById('topicList');list.innerHTML='';
+  (proposedPlan.temas||[]).forEach((tema,i)=>{
+    const on=topicSel[i];
+    const chips=(tema.apartados||[]).map(a=>`<span class="tcard-chip" id="chip-${i}-${a.n-1}">${a.n}. ${esc(a.titulo)}</span>`).join('');
+    const aptEdits=(tema.apartados||[]).map((a,ai)=>`<div class="apt-row"><span style="font-size:11px;color:var(--t3);min-width:16px;text-align:center;font-weight:600">${ai+1}</span><input type="text" value="${esc(a.titulo)}" id="ainp-${i}-${ai}" oninput="updateApt(${i},${ai},this.value)"><button class="apt-del" onclick="delApt(${i},${ai})">✕</button></div>`).join('');
+    const div=document.createElement('div');div.className='tcard anim '+(on?'on':'off');div.id='tc-'+i;
+    div.innerHTML=`<div class="tcard-head" onclick="toggleTopicSel(${i},event)"><div class="tcard-check" id="tcheck-${i}">${on?'✓':''}</div><div class="tcard-num">${tema.numero}</div><div class="tcard-body"><div class="tcard-label">Tema ${tema.numero} · 1h teórica</div><div class="tcard-title" id="tdisp-${i}">${esc(tema.titulo)}</div><div class="tcard-desc">${esc(tema.descripcion||'')}</div><div class="tcard-chips" id="tchips-${i}">${chips}</div></div><div class="tcard-actions" onclick="event.stopPropagation()"><button class="btn btn-sm" onclick="toggleEdit(${i})">✏️</button></div></div><div class="tcard-edit" id="tedit-${i}"><div class="edit-row"><label>Título</label><input type="text" value="${esc(tema.titulo)}" id="tinp-${i}" oninput="updateTitle(${i},this.value)"></div><div class="edit-lbl" style="margin-top:9px">Apartados</div><div class="apts-edit" id="apts-${i}">${aptEdits}</div><button class="btn btn-sm" style="margin-top:7px" onclick="addApt(${i})">+ Añadir</button></div>`;
+    list.appendChild(div);
+  });
+}
+function toggleTopicSel(i,e){if(e&&(e.target.closest('.tcard-actions')||e.target.closest('.tcard-edit')))return;topicSel[i]=!topicSel[i];const card=document.getElementById('tc-'+i);const chk=document.getElementById('tcheck-'+i);card.className='tcard '+(topicSel[i]?'on':'off');chk.textContent=topicSel[i]?'✓':'';updateSelCount();persist.topicsel().catch(()=>{});}
+function toggleEdit(i){document.getElementById('tedit-'+i).classList.toggle('open');}
+function updateTitle(i,v){proposedPlan.temas[i].titulo=v;const d=document.getElementById('tdisp-'+i);if(d)d.textContent=v;persist.plan().catch(()=>{});}
+function updateApt(i,ai,v){const t=proposedPlan.temas[i];if(t&&t.apartados[ai]){t.apartados[ai].titulo=v;const c=document.getElementById('chip-'+i+'-'+ai);if(c)c.textContent=(ai+1)+'. '+v;}persist.plan().catch(()=>{});}
+function delApt(i,ai){proposedPlan.temas[i].apartados.splice(ai,1);proposedPlan.temas[i].apartados.forEach((a,idx)=>a.n=idx+1);renderTopicCards();document.getElementById('tedit-'+i).classList.add('open');persist.plan().catch(()=>{});}
+function addApt(i){const t=proposedPlan.temas[i];t.apartados.push({n:t.apartados.length+1,titulo:'Nuevo apartado '+(t.apartados.length+1)});renderTopicCards();document.getElementById('tedit-'+i).classList.add('open');persist.plan().catch(()=>{});}
+function selAll(v){topicSel=topicSel.map(()=>v);renderTopicCards();updateSelCount();persist.topicsel().catch(()=>{});}
+function updateSelCount(){
+  const n=topicSel.filter(Boolean).length,t=topicSel.length;
+  const sN=document.getElementById('selN'),sT=document.getElementById('selT'),sH=document.getElementById('selH');
+  if(sN)sN.textContent=n;if(sT)sT.textContent=t;if(sH)sH.textContent=n;
+  updateEstimate();
+  const b=document.getElementById('btnToStep5');
+  if(b){b.disabled=n===0;b.textContent=n===0?'(Selecciona al menos 1)':'Ver resumen →';}
+}
+
+// ═══ PROGRESS UI ══════════════════════════════════════
+function buildTprogList(selTemas){
+  const c=document.getElementById('tprogList');c.innerHTML='';
+  selTemas.forEach((t,i)=>{
+    const d=document.createElement('div');d.className='tprog-row';d.id='tpr-'+i;
+    d.innerHTML=`<div class="tprog-n" id="tpn-${i}">${i+1}</div><div class="tprog-title">${esc(t.titulo)}</div><div class="tprog-status" id="tps-${i}">Pendiente</div>`;
+    c.appendChild(d);
+  });
+}
+function setTprog(i,state,status=''){
+  const n=document.getElementById('tpn-'+i),s=document.getElementById('tps-'+i);
+  if(!n)return;
+  n.className='tprog-n '+(state==='done'?'done':state==='active'?'active':'');
+  if(s)s.textContent=status||{done:'✅ Listo',active:'⏳ Generando...','':'Pendiente'}[state]||'';
+}
+function setPh(n){[1,2,3,4,5].forEach(i=>{const p=document.getElementById('ph'+i);if(!p)return;p.classList.remove('active','done');if(i<n)p.classList.add('done');else if(i===n)p.classList.add('active');});}
+function setFill(pct){
+  document.getElementById('pfill').style.width=pct+'%';
+  showGenBanner(isRunning,pct,document.getElementById('progPhaseLabel')?.textContent||'Generando...');
+  document.getElementById('genBannerPct').textContent=pct+'%';
+}
+function setPhaseLabel(txt){const el=document.getElementById('progPhaseLabel');if(el)el.textContent=txt;}
+
+// ═══ MAIN GENERATION ══════════════════════════════════
+let pauseGeneration=false;
+let _resumeResolve=null;
+function togglePause(){
+  pauseGeneration=!pauseGeneration;
+  const btn=document.getElementById('btnPause');
+  if(btn)btn.textContent=pauseGeneration?'▶ Reanudar':'⏸ Pausar';
+  if(!pauseGeneration&&_resumeResolve){_resumeResolve();_resumeResolve=null;}
+  log(pauseGeneration?'⏸ Pausado — pulsa "Reanudar" para continuar.':'▶ Reanudando...','w');
+}
+async function checkPause(){
+  if(!pauseGeneration)return;
+  await new Promise(r=>{_resumeResolve=r;});
+}
+
+async function startGeneration(testMode=false){
+  if(isRunning)return;
+  const k=document.getElementById('apiKey').value.trim();
+  if(!k){alert('Introduce tu API key.');return;}
+  if(!proposedPlan){alert('Genera el plan primero (paso 4).');goW(3);return;}
+  const allSelTemas=(proposedPlan.temas||[]).filter((_,i)=>topicSel[i]);
+  if(!allSelTemas.length){alert('Selecciona al menos un tema.');goW(4);return;}
+  const selTemas=testMode?[allSelTemas[0]]:allSelTemas;
+
+  isRunning=true;shouldStop=false;pauseGeneration=false;logLines=0;
+  document.getElementById('btnGen').disabled=true;document.getElementById('btnGen').textContent='⏳';
+  document.getElementById('btnGenW').disabled=true;document.getElementById('btnGenW').textContent='⏳ Generando...';
+  const btnT1=document.getElementById('btnTest1');if(btnT1)btnT1.disabled=true;
+  document.getElementById('btnStop').disabled=false;
+  // Show pause button
+  const pauseBtn=document.getElementById('btnPause');if(pauseBtn){pauseBtn.style.display='';pauseBtn.textContent='⏸ Pausar';}
+  document.getElementById('progDetail').classList.add('v');
+  buildTprogList(selTemas);setFill(0);
+  showMain('wizard');goW(5);
+
+  // 7: Read nivel/lang from generatedData if loaded from history, else from DOM
+  const nivel=generatedData?.meta?.nivel||document.getElementById('nivel').value;
+  const lang=generatedData?.meta?.lang||document.getElementById('lang').value;
+  const instruc=document.getElementById('instruc').value.trim();
+  const nd=NIVEL[nivel]||nivel;
+  const genLatex=document.getElementById('tog-latex').classList.contains('on');
+  const genTest=document.getElementById('tog-test').classList.contains('on');
+  const genMapa=document.getElementById('tog-mapa').classList.contains('on');
+  const genEj=document.getElementById('tog-ej').classList.contains('on');
+  const genConx=document.getElementById('tog-conx').classList.contains('on');
+  const genGuia=document.getElementById('tog-guia').classList.contains('on');
+  const genBib=document.getElementById('tog-bib').classList.contains('on');
+  // 4: Word count from slider
+  const wc=parseInt(document.getElementById('wordCount')?.value||2);
+  const wcWords=wc===1?150:wc===3?500:300;
+  const wcLabel=wc===1?'conciso (~150 palabras)':wc===3?'detallado (~500 palabras)':'estándar (~300 palabras)';
+  const t0=Date.now();
+
+  // Initialize output for real-time rendering
+  generatedData={plan:proposedPlan,guia:null,temas:[],tests:{},mapas:{},bib:null,
+    meta:{nivel,lang}};  // 7: save nivel+lang in meta
+  currentHistId=Date.now().toString();
+  showMain('output');
+  document.getElementById('outEmpty').style.display='none';
+  document.getElementById('outContent').style.display='block';
+  renderOutputHeader();
+  document.getElementById('outDot').style.display='';
+  try{
+    // ── FASE 1: GUÍA ──
+    setPh(1);setPhaseLabel('Fase 1: Generando ficha docente...');setFill(3);
+    if(genGuia&&!testMode){
+      log('📄 Ficha docente...');
+      const guia=await callJSON(
+        `Eres el agente Guide. Ficha de asignatura formal. SOLO JSON puro.`,
+        `ASIGNATURA:${proposedPlan.asignatura}\nNIVEL:${nd}\nIDIOMA:${lang}\nCRÉDITOS:${selTemas.length}\nOBJETIVOS:${JSON.stringify(proposedPlan.objetivos||[])}\nCOMPETENCIAS:${JSON.stringify(proposedPlan.competencias||[])}\nTEMAS:${selTemas.map(t=>t.titulo).join(', ')}\nJSON:{"metodologia":"...","evaluacion":[{"tipo":"Examen","porcentaje":60,"desc":"..."},{"tipo":"Prácticas","porcentaje":30,"desc":"..."},{"tipo":"Participación","porcentaje":10,"desc":"..."}],"requisitos":"...","dedicacion":"..."}`,1200);
+      generatedData.guia=guia;renderGuia();log('✅ Ficha lista.','ok');
+    }
+    // ── FASE 2: DESARROLLO ──
+    setPh(2);setPhaseLabel('Fase 2: Desarrollando temas...');
+    for(let i=0;i<selTemas.length;i++){
+      if(shouldStop)throw new Error('__STOP__');
+      await checkPause();  // 1: pausable between topics
+      const t=selTemas[i];
+      setTprog(i,'active');
+      log(`  ✏️ Tema ${t.numero}: "${t.titulo}"...`);
+      const src=getSrc(t.titulo);
+      const allTemas=selTemas.map((x,j)=>`${j+1}. ${x.titulo}`).join('\n');
+      const td=await callJSON(
+        `Eres el agente Developer. Desarrolla contenido académico riguroso.
+Nivel: ${nd}. Idioma: ${lang}.
+Extensión por apartado: ${wcLabel}.
+${genLatex?'Usa KaTeX: $...$ inline, $$...$$ bloque. Solo cuando haya fórmulas matemáticas reales.':''}
+${genEj?'Incluye ejemplo resuelto por apartado.':''}
+${genConx?'Añade conexiones con temas previos y siguientes.':''}
+El contenido debe ser coherente con el programa completo de la asignatura.
+SOLO JSON puro.`,
+        `ASIGNATURA: ${proposedPlan.asignatura}
+TEMA ${t.numero}: ${t.titulo}
+APARTADOS: ${JSON.stringify(t.apartados)}
+PROGRAMA COMPLETO:\n${allTemas}
+${instruc?'INSTRUCCIONES: '+instruc:''}
+MATERIAL RELEVANTE:\n${src}
+JSON:{"numero":${t.numero},"titulo":"${t.titulo.replace(/"/g,"'")}","descripcion":"${(t.descripcion||'').replace(/"/g,"'")}","apartados_d":[{"n":1,"titulo":"...","contenido":"desarrollo ${wcLabel}","formulas":[{"desc":"nombre","latex":"expresión"}],"ejemplo":"${genEj?'paso a paso':''}"}]${genConx?',"conexiones":{"prev":["..."],"sig":["..."]}':''}}`,2800);
+      generatedData.temas.push(td);
+      appendTemaToOutput(td,genTest,genMapa,generatedData.tests,generatedData.mapas);
+      setTprog(i,'done');
+      setFill(Math.round((i+1)/selTemas.length*40+10));
+      log(`  ✅ Tema ${t.numero} listo.`,'ok');
+    }
+    // ── FASE 3: TESTS ──
+    if(genTest){
+      setPh(3);setPhaseLabel('Fase 3: Generando tests...');
+      for(let i=0;i<generatedData.temas.length;i++){
+        if(shouldStop)throw new Error('__STOP__');
+        await checkPause();
+        const t=generatedData.temas[i];
+        log(`  ❓ Test Tema ${t.numero}...`);
+        const td=await callJSON(
+          `Eres el agente Quiz. 5 preguntas tipo test por apartado. Nivel:${nd}. Idioma:${lang}. SOLO JSON.`,
+          `TEMA ${t.numero}: ${t.titulo}\nAPARTADOS:${JSON.stringify((t.apartados_d||[]).map(a=>({n:a.n,titulo:a.titulo,resumen:(a.contenido||'').slice(0,300)})))}\nJSON:{"tema":${t.numero},"tests":[{"apt_n":1,"apt_titulo":"...","preguntas":[{"p":"texto","opts":["A)...","B)...","C)...","D)..."],"ok":0,"exp":"por qué"}]}]}`,2400);
+        generatedData.tests[t.numero]=td;
+        updateTemaTests(t.numero,td);
+        setFill(Math.round(50+i/generatedData.temas.length*20));
+        log(`  ✅ Test Tema ${t.numero}.`,'ok');
       }
-
-      function updateProgress(percent, text) {
-        document.getElementById('progressBar').style.width = percent + '%';
-        document.getElementById('progressText').textContent = text;
+    }
+    // ── FASE 4: MAPAS ──
+    if(genMapa){
+      setPh(4);setPhaseLabel('Fase 4: Generando mapas...');
+      for(let i=0;i<generatedData.temas.length;i++){
+        if(shouldStop)throw new Error('__STOP__');
+        await checkPause();
+        const t=generatedData.temas[i];
+        log(`  🗺️ Mapa Tema ${t.numero}...`);
+        const md=await callJSON(
+          `Eres el agente Map. Mapa conceptual (máx 12 nodos). SOLO JSON.`,
+          `TEMA:${t.titulo}\nAPARTADOS:${(t.apartados_d||[]).map(a=>a.titulo).join(', ')}\nJSON:{"central":"${t.titulo.slice(0,20).replace(/"/g,"'")}","nodos":[{"id":"n0","label":"...","tipo":"central"},{"id":"n1","label":"...","tipo":"primario"}],"aristas":[{"de":"n0","a":"n1","lbl":"incluye"}]}`,900);
+        generatedData.mapas[t.numero]=md;
+        updateTemaMapa(t.numero,md);
+        setFill(Math.round(70+i/generatedData.temas.length*20));
+        log(`  ✅ Mapa Tema ${t.numero}.`,'ok');
       }
+    }
+    // ── FASE 5: BIBLIO ──
+    if(genBib&&!testMode){
+      setPh(5);setPhaseLabel('Fase 5: Bibliografía...');setFill(92);
+      log('📚 Bibliografía...');
+      const bib=await callGPT(`Eres el agente Bib. Bibliografía APA. Idioma:${lang}. Nivel:${nd}.`,
+        `ASIGNATURA:${proposedPlan.asignatura}\nTEMAS:${generatedData.temas.map(t=>t.titulo).join(', ')}\nMATERIAL:${getSrc().slice(0,3000)}\nLista 6-10 referencias APA.`,800);
+      generatedData.bib=bib;renderBib();log('✅ Bibliografía lista.','ok');
+    }
+    generatedData.meta={...generatedData.meta,t:Math.round((Date.now()-t0)/1000)+'s',f:files.length,savedAt:Date.now()};
+    renderOutputHeader();renderStats();
+    const asigToSave={id:currentHistId,nombre:proposedPlan.asignatura,savedAt:Date.now(),temas:generatedData.temas.length,data:generatedData};
+    await dbSaveAsig(asigToSave);
+    await refreshHistorial();await updateStorageUI();
+    setFill(100);
+    setPhaseLabel(testMode?'🧪 Tema de prueba completado — revisa el resultado y genera la asignatura completa':'✅ Asignatura completada');
+    document.getElementById('searchBar').style.display='flex';
+    document.getElementById('outExportRow').style.display='flex';
+    log(testMode?`🧪 Tema de prueba listo. Revisa el resultado y ajusta si es necesario.`:`🎉 Completado en ${generatedData.meta.t}!`,'ok');
+    if(testMode){
+      // Mostrar banner invitando a generar todo
+      setPhaseLabel('🧪 Prueba completada. ¿Te gusta el resultado? Pulsa ▶ Generar para el resto.');
+    }
+    setTimeout(renderKatex,300);
+  }catch(e){
+    if(e.message==='__STOP__')log('⏹ Detenido por el usuario.','w');
+    else{log('❌ Error: '+e.message,'err');if(e.message.includes('401'))log('💡 API key incorrecta.','w');else if(e.message.includes('429'))log('💡 Rate limit.','w');}
+  }finally{
+    isRunning=false;shouldStop=false;pauseGeneration=false;_resumeResolve=null;
+    showGenBanner(false);
+    document.getElementById('btnGen').disabled=false;
+    document.getElementById('btnGenW').disabled=false;document.getElementById('btnGenW').textContent='▶ Generar asignatura';
+    const btnT1b=document.getElementById('btnTest1');if(btnT1b)btnT1b.disabled=false;
+    document.getElementById('btnStop').disabled=true;
+    const pb=document.getElementById('btnPause');if(pb)pb.style.display='none';
+    updateTopbarBtn();
+  }
+}
 
-      // Leer archivos locales
-      async function readLocalFiles(fileList) {
-        const texts = [];
-        for (const file of fileList) {
-          if (file.type !== 'text/plain') continue;
-          const text = await file.text();
-          texts.push(text);
-        }
-        return texts.join('\n\n');
-      }
+// ═══ REGENERAR TEMA INDIVIDUAL ════════════════════════
+async function regenTema(temaNumero){
+  if(isRunning){alert('Espera a que termine la generación actual.');return;}
+  if(!generatedData){alert('No hay asignatura activa.');return;}
+  const k=document.getElementById('apiKey').value.trim();
+  if(!k){alert('Introduce tu API key.');return;}
+  const tIdx=generatedData.temas.findIndex(t=>t.numero===temaNumero);
+  if(tIdx===-1){alert('Tema no encontrado.');return;}
+  const tPlan=(proposedPlan?.temas||[]).find(t=>t.numero===temaNumero);
+  if(!tPlan)return;
+  const nd=NIVEL[document.getElementById('nivel').value]||'';
+  const lang=document.getElementById('lang').value;
+  const instruc=document.getElementById('instruc').value.trim();
+  const genLatex=document.getElementById('tog-latex').classList.contains('on');
+  const genTest=document.getElementById('tog-test').classList.contains('on');
+  const genMapa=document.getElementById('tog-mapa').classList.contains('on');
+  const genEj=document.getElementById('tog-ej').classList.contains('on');
+  const genConx=document.getElementById('tog-conx').classList.contains('on');
+  isRunning=true;shouldStop=false;
+  document.getElementById('btnGen').disabled=true;
+  document.getElementById('btnStop').disabled=false;
+  // Spinner en el badge del tema
+  const numEl=document.getElementById('tnum-'+temaNumero);
+  if(numEl)numEl.classList.add('gen-spin');
+  try{
+    log(`🔄 Regenerando Tema ${temaNumero}: "${tPlan.titulo}"...`);
+    const src=getSrc(tPlan.titulo);
+    const allTemas=(proposedPlan?.temas||[]).map((x,j)=>`${j+1}. ${x.titulo}`).join('\n');
+    const td=await callJSON(
+      `Eres el agente Developer. Regenera el contenido académico de este tema. Nivel:${nd}. Idioma:${lang}. ${genLatex?'Usa KaTeX $...$, $$...$$':''} ${genEj?'Incluye ejemplos.':''} ${genConx?'Añade conexiones.':''} SOLO JSON.`,
+      `ASIGNATURA:${proposedPlan.asignatura}\nTEMA ${tPlan.numero}: ${tPlan.titulo}\nAPARTADOS:${JSON.stringify(tPlan.apartados)}\nPROGRAMA:\n${allTemas}\n${instruc?'INSTRUCCIONES:'+instruc:''}\nMATERIAL:\n${src}\nJSON:{"numero":${tPlan.numero},"titulo":"${tPlan.titulo.replace(/"/g,"'")}","descripcion":"${(tPlan.descripcion||'').replace(/"/g,"'")}","apartados_d":[{"n":1,"titulo":"...","contenido":"200+ palabras","formulas":[{"desc":"nombre","latex":"expr"}],"ejemplo":""}]${genConx?',"conexiones":{"prev":[""],"sig":[""]}':''}}`,2800);
+    generatedData.temas[tIdx]=td;
+    // Tests
+    if(genTest){
+      log(`  ❓ Regenerando test Tema ${temaNumero}...`);
+      const testD=await callJSON(
+        `Quiz Bot. 5 preguntas por apartado. Nivel:${nd}. Idioma:${lang}. SOLO JSON.`,
+        `TEMA ${td.numero}:${td.titulo}\nAPARTADOS:${JSON.stringify((td.apartados_d||[]).map(a=>({n:a.n,titulo:a.titulo,resumen:(a.contenido||'').slice(0,300)})))}\nJSON:{"tema":${td.numero},"tests":[{"apt_n":1,"apt_titulo":"...","preguntas":[{"p":"texto","opts":["A)...","B)...","C)...","D)..."],"ok":0,"exp":"..."}]}]}`,2400);
+      generatedData.tests[temaNumero]=testD;
+    }
+    // Mapa
+    if(genMapa){
+      log(`  🗺️ Regenerando mapa Tema ${temaNumero}...`);
+      const md=await callJSON(
+        `Map Bot. Mapa conceptual máx 12 nodos. SOLO JSON.`,
+        `TEMA:${td.titulo}\nAPARTADOS:${(td.apartados_d||[]).map(a=>a.titulo).join(', ')}\nJSON:{"central":"${td.titulo.slice(0,20).replace(/"/g,"'")}","nodos":[{"id":"n0","label":"...","tipo":"central"}],"aristas":[]}`,900);
+      generatedData.mapas[temaNumero]=md;
+    }
+    // Re-render del tema en el DOM
+    replaceTemaInOutput(td,genTest,genMapa);
+    // Actualizar en historial
+    if(currentHistId){
+      const all=await dbLoadAllAsigs();
+      const saved=all.find(a=>a.id===currentHistId);
+      if(saved){saved.data=generatedData;await dbSaveAsig(saved);}
+    }
+    log(`✅ Tema ${temaNumero} regenerado.`,'ok');
+    setTimeout(renderKatex,300);
+  }catch(e){
+    if(e.message==='__STOP__')log('⏹ Detenido.','w');
+    else log('❌ Error regenerando: '+e.message,'err');
+  }finally{
+    isRunning=false;shouldStop=false;
+    document.getElementById('btnGen').disabled=false;
+    document.getElementById('btnStop').disabled=true;
+    if(numEl)numEl.classList.remove('gen-spin');
+  }
+}
 
-      // Llamar a OpenAI
-      async function callOpenAI(messages, model = 'gpt-3.5-turbo') {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${state.apiKey}`
-          },
-          body: JSON.stringify({
-            model,
-            messages,
-            temperature: 0.7,
-            max_tokens: 2000
-          })
+// ═══ HISTORIAL ════════════════════════════════════════
+async function refreshHistorial(){
+  const asigs=await dbLoadAllAsigs();
+  const list=document.getElementById('histList');
+  const cnt=document.getElementById('histCount');
+  if(cnt)cnt.textContent=asigs.length?'('+asigs.length+')':'';
+  if(!list)return;
+  if(asigs.length===0){list.innerHTML='<div class="hist-empty">Aún no hay asignaturas</div>';return;}
+  list.innerHTML=asigs.map(a=>{
+    const d=new Date(a.savedAt);
+    const ds=d.toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'2-digit'});
+    const nivel=a.data?.plan?.nivel||'';
+    const nivelShort=nivel.includes('1º')?'Grado 1º':nivel.includes('3º')?'Grado 3º':nivel.includes('ster')?'Máster':nivel.includes('octor')?'Doctor':nivel.includes('ach')?'Bach':'—';
+    const temas=a.temas||0;
+    return`<div class="hist-item${a.id===currentHistId?' active-hist':''}" id="hi-${a.id}" onclick="loadAsig('${a.id}')">
+      <div style="flex:1;min-width:0">
+        <div class="hist-name" title="${esc(a.nombre)}">${esc(a.nombre)}</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:1px">${temas} temas · ${nivelShort} · ${ds}</div>
+      </div>
+      <button class="hist-del" onclick="deleteAsig('${a.id}',event)" title="Eliminar">✕</button>
+    </div>`;
+  }).join('');
+}
+async function loadAsig(id){
+  const all=await dbLoadAllAsigs();
+  const a=all.find(x=>x.id===id);
+  if(!a)return;
+  generatedData=a.data;
+  currentHistId=id;
+  proposedPlan=a.data.plan;
+  topicSel=(a.data.plan?.temas||[]).map(()=>true);
+  renderFullOutput();
+  showMain('output');
+  document.getElementById('outDot').style.display='';
+  await refreshHistorial();
+  updateTopbarBtn();
+}
+async function deleteAsig(id,e){
+  e.stopPropagation();
+  if(!confirm('¿Eliminar esta asignatura del historial?'))return;
+  await dbDelAsig(id);
+  if(currentHistId===id){generatedData=null;currentHistId=null;document.getElementById('outEmpty').style.display='block';document.getElementById('outContent').style.display='none';}
+  await refreshHistorial();
+  await updateStorageUI();
+}
+
+// ═══ RENDER OUTPUT ════════════════════════════════════
+function renderOutputHeader(){
+  const d=generatedData;if(!d)return;
+  const p=d.plan;
+  document.getElementById('outHdr').innerHTML=`<div class="asig-hdr anim"><div style="font-size:10px;opacity:.65;margin-bottom:3px;text-transform:uppercase;letter-spacing:.1em">Asignatura</div><h2>${esc(p.asignatura||'')}</h2><p style="opacity:.8;font-size:13px;margin-top:3px">${esc(p.descripcion||'')}</p><div class="asig-meta"><div class="asig-chip">🎓 ${esc(p.nivel||'')}</div><div class="asig-chip" id="hdrTemasChip">📚 ${d.temas.length} temas</div><div class="asig-chip">⏱ ${d.meta?.t||'...'}</div></div></div>`;
+}
+function renderStats(){
+  const d=generatedData;if(!d)return;
+  const nPr=d.temas.reduce((ac,t)=>{const td=d.tests[t.numero];return ac+(td?.tests||[]).reduce((a,ap)=>a+(ap.preguntas||[]).length,0);},0);
+  const nAp=d.temas.reduce((ac,t)=>ac+(t.apartados_d||[]).length,0);
+  const sr=document.getElementById('outStats');sr.style.display='grid';
+  sr.innerHTML=`<div class="scard anim"><div class="sv">${d.temas.length}</div><div class="sl">Temas</div></div><div class="scard anim"><div class="sv">${nAp}</div><div class="sl">Apartados</div></div><div class="scard anim"><div class="sv">${nPr}</div><div class="sl">Preguntas</div></div><div class="scard anim"><div class="sv">${Object.keys(d.mapas||{}).length}</div><div class="sl">Mapas</div></div>`;
+  document.getElementById('outExportRow').style.display='flex';
+  document.getElementById('outExportRow').innerHTML=`<button class="btn btn-success" onclick="expPDF()">🖨 PDF</button><button class="btn btn-success" onclick="expDOCX()">📄 DOCX</button><button class="btn" onclick="expMd()">⬇ Markdown</button><button class="btn" onclick="expJSON()">⬇ JSON</button><button class="btn" onclick="copyAll()">📋 Copiar</button>`;
+  document.getElementById('searchBar').style.display='flex';
+}
+function renderGuia(){
+  const d=generatedData;if(!d?.guia)return;
+  const p=d.plan;const g=d.guia;
+  const ev=(g.evaluacion||[]).map(e=>`<tr><td style="padding:5px 8px;border-bottom:1px solid var(--border)">${e.tipo||''}</td><td style="padding:5px 8px;border-bottom:1px solid var(--border);text-align:center;font-weight:600;color:var(--accent)">${e.porcentaje||0}%</td><td style="padding:5px 8px;border-bottom:1px solid var(--border);color:var(--t2)">${e.desc||''}</td></tr>`).join('');
+  document.getElementById('outGuia').innerHTML=`<div class="tema-card anim" style="margin-bottom:11px"><div class="tema-hdr" onclick="tog('gb')"><div class="tema-num" style="background:linear-gradient(135deg,var(--teal),#0d9488)">📋</div><div class="tema-title">Ficha de Asignatura — Guía Docente</div><div class="tema-badges"><span class="tbadge tb-g">Guía</span></div><div class="tema-chev" id="chev-gb">▶</div></div><div class="tema-body" id="gb"><div class="sb"><div class="stitle">🎯 Objetivos</div><ul style="padding-left:18px;color:var(--t2);font-size:13px">${(p.objetivos||[]).map(o=>`<li style="margin-bottom:3px">${esc(o)}</li>`).join('')}</ul></div><div class="sb"><div class="stitle">⚡ Competencias</div><ul style="padding-left:18px;color:var(--t2);font-size:13px">${(p.competencias||[]).map(c=>`<li style="margin-bottom:3px">${esc(c)}</li>`).join('')}</ul></div><div class="sb"><div class="stitle">📐 Metodología</div><p style="font-size:13px;color:var(--t2)">${esc(g.metodologia||'')}</p></div><div class="sb"><div class="stitle">📊 Evaluación</div><table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden"><thead><tr style="background:#f7f8fa"><th style="text-align:left;padding:5px 8px;color:var(--t3);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Tipo</th><th style="text-align:center;padding:5px 8px;color:var(--t3);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">%</th><th style="text-align:left;padding:5px 8px;color:var(--t3);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">Descripción</th></tr></thead><tbody>${ev}</tbody></table></div>${g.requisitos?`<div class="sb"><div class="stitle">📚 Requisitos</div><p style="font-size:13px;color:var(--t2)">${esc(g.requisitos)}</p></div>`:''}</div></div>`;
+}
+function renderBib(){
+  const d=generatedData;if(!d?.bib)return;
+  document.getElementById('outBib').innerHTML=`<div class="tema-card anim"><div class="tema-hdr" onclick="tog('bibb')"><div class="tema-num" style="background:linear-gradient(135deg,#0f766e,var(--teal))">📚</div><div class="tema-title">Bibliografía Recomendada</div><div class="tema-chev" id="chev-bibb">▶</div></div><div class="tema-body" id="bibb"><div style="font-size:13px;color:var(--t2);line-height:2;white-space:pre-wrap">${esc(d.bib)}</div></div></div>`;
+}
+// Añade un tema al output en tiempo real (durante generación)
+function appendTemaToOutput(tema,genTest,genMapa,testsMap,mapasMap){
+  const tl=document.getElementById('outTemas');
+  const div=buildTemaCard(tema,genTest,genMapa,testsMap,mapasMap);
+  tl.appendChild(div);
+}
+// Reemplaza un tema ya renderizado (para regenerar)
+function replaceTemaInOutput(tema,genTest,genMapa){
+  const existing=document.getElementById('tema-card-'+tema.numero);
+  if(!existing)return;
+  const div=buildTemaCard(tema,genTest,genMapa,generatedData.tests,generatedData.mapas);
+  existing.replaceWith(div);
+  setTimeout(renderKatex,200);
+}
+// Actualiza solo los tests de un tema ya renderizado
+function updateTemaTests(temaNumero,testData){
+  const d=generatedData;
+  const t=d.temas.find(x=>x.numero===temaNumero);
+  if(!t)return;
+  (t.apartados_d||[]).forEach(apt=>{
+    const at=(testData.tests||[]).find(x=>x.apt_n===apt.n);
+    if(!at)return;
+    const cid='qc-'+temaNumero+'-'+apt.n;
+    const cont=document.getElementById(cid);
+    if(cont)cont.innerHTML=buildQuizHtml(temaNumero,apt.n,at);
+  });
+}
+// Actualiza el mapa de un tema ya renderizado
+function updateTemaMapa(temaNumero,mapaData){
+  const cid='map-'+temaNumero;
+  const cont=document.getElementById(cid);
+  if(cont)cont.innerHTML=buildMapaSVG(mapaData);
+}
+// Render full output (al cargar desde historial)
+function renderFullOutput(){
+  document.getElementById('outEmpty').style.display='none';
+  document.getElementById('outContent').style.display='block';
+  renderOutputHeader();
+  renderStats();
+  renderGuia();
+  const tl=document.getElementById('outTemas');tl.innerHTML='';
+  generatedData.temas.forEach(tema=>{
+    const div=buildTemaCard(tema,true,true,generatedData.tests,generatedData.mapas);
+    tl.appendChild(div);
+  });
+  renderBib();
+  setTimeout(renderKatex,400);
+}
+// Construye la tarjeta completa de un tema
+function buildTemaCard(tema,genTest,genMapa,testsMap,mapasMap){
+  const apts=(tema.apartados_d||[]).map(apt=>{
+    const testData=testsMap[tema.numero];
+    const at=testData?(testData.tests||[]).find(x=>x.apt_n===apt.n):null;
+    const fmls=(apt.formulas||[]).filter(f=>f.latex).map(f=>`<div class="katex-block"><div style="font-size:10px;color:var(--t3);font-family:var(--ff);margin-bottom:4px;font-weight:500">📐 ${esc(f.desc||'')}</div><div class="katex-formula">${esc(f.latex)}</div></div>`).join('');
+    const quiz=at?`<div class="quiz"><div class="quiz-title">❓ Test — ${at.preguntas?.length||0} preguntas</div><div id="qc-${tema.numero}-${apt.n}">${buildQuizHtml(tema.numero,apt.n,at)}</div></div>`:`<div id="qc-${tema.numero}-${apt.n}"></div>`;
+    return`<div class="sb"><div class="stitle"><span style="background:#ede9fe;color:var(--violet);width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${tema.numero}.${apt.n}</span>${esc(apt.titulo)}</div><div class="scontent">${renderMd(apt.contenido||'')}</div>${fmls}${apt.ejemplo?`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:var(--r);padding:10px 13px;margin-top:9px;font-size:13px;color:var(--t2)"><strong style="color:var(--amber)">💡 Ejemplo:</strong><br>${esc(apt.ejemplo)}</div>`:''}${quiz}</div>`;
+  }).join('');
+  const mapaHtml=mapasMap[tema.numero]?`<div class="mapa"><div class="mapa-title">🗺️ Mapa conceptual</div><div id="map-${tema.numero}">${buildMapaSVG(mapasMap[tema.numero])}</div></div>`:`<div class="mapa" style="min-height:40px"><div class="mapa-title">🗺️ Mapa conceptual</div><div id="map-${tema.numero}" style="font-size:12px;color:var(--t3)">Generando...</div></div>`;
+  const conxHtml=tema.conexiones?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${(tema.conexiones.prev||[]).join(', ')?`<div style="flex:1;min-width:150px;background:#f7f8fa;border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;font-size:12px;color:var(--t2)">⬅️ <strong>Prerrequisitos:</strong> ${esc((tema.conexiones.prev||[]).join(', '))}</div>`:''}${(tema.conexiones.sig||[]).join(', ')?`<div style="flex:1;min-width:150px;background:#f7f8fa;border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;font-size:12px;color:var(--t2)">➡️ <strong>Continúa en:</strong> ${esc((tema.conexiones.sig||[]).join(', '))}</div>`:''}</div>`:'';
+  const tc_n=(testsMap[tema.numero]?.tests||[]).reduce((a,ap)=>a+(ap.preguntas||[]).length,0);
+  const bid='tb-'+tema.numero;
+  const div=document.createElement('div');div.className='tema-card anim';div.id='tema-card-'+tema.numero;
+  div.innerHTML=`<div class="tema-hdr" onclick="tog('${bid}')"><div class="tema-num" id="tnum-${tema.numero}">${tema.numero}</div><div class="tema-title">${esc(tema.titulo)}</div><div class="tema-badges"><span class="tbadge tb-b">1h</span>${tc_n>0?`<span class="tbadge tb-g">❓${tc_n}</span>`:''}${mapasMap[tema.numero]?`<span class="tbadge tb-v">🗺️</span>`:''}</div><div class="tema-chev" id="chev-${bid}">▶</div></div><div class="tema-body" id="${bid}"><div class="tema-actions"><button class="btn btn-sm btn-amber" onclick="regenTema(${tema.numero})">🔄 Regenerar</button><button class="btn btn-sm" onclick="toggleInlineEdit(${tema.numero})" id="editBtn-${tema.numero}">✏️ Editar contenido</button>${tc_n>0?`<button class="btn btn-sm btn-success" onclick="expQuiz(${tema.numero})">📋 Exportar test</button>`:''}</div>${apts}${mapaHtml}${conxHtml}</div>`;
+  return div;
+}
+function buildQuizHtml(tNum,aptN,at){
+  if(!at)return'';
+  return(at.preguntas||[]).map((q,qi)=>{
+    const qid=`q${tNum}_${aptN}_${qi}`;
+    const opts=(q.opts||[]).map((o,oi)=>`<button class="qopt" onclick="ansQ('${qid}',${oi},${q.ok},'${qid}_exp')" id="${qid}_${oi}"><span class="qlet">${['A','B','C','D'][oi]}</span> ${esc(o)}</button>`).join('');
+    return`<div class="quiz-q">${qi+1}. ${esc(q.p||'')}</div><div class="quiz-opts">${opts}</div><div class="qexp" id="${qid}_exp">${esc(q.exp||'')}</div>`;
+  }).join('');
+}
+
+// ═══ INLINE EDIT (#2) ════════════════════════════════
+const _editMode={};
+function toggleInlineEdit(temaNum){
+  _editMode[temaNum]=!_editMode[temaNum];
+  const on=_editMode[temaNum];
+  const btn=document.getElementById('editBtn-'+temaNum);
+  if(btn)btn.textContent=on?'💾 Guardar edits':'✏️ Editar contenido';
+  if(btn)btn.style.background=on?'rgba(5,150,105,.15)':'';
+  const card=document.getElementById('tema-card-'+temaNum);
+  if(!card)return;
+  const tema=generatedData?.temas?.find(t=>t.numero===temaNum);
+  if(!tema)return;
+  card.querySelectorAll('.scontent').forEach((el,i)=>{
+    const apt=tema.apartados_d?.[i];
+    if(!apt)return;
+    if(on){
+      // Switch to editable textarea
+      const ta=document.createElement('textarea');
+      ta.value=apt.contenido||'';
+      ta.style.cssText='width:100%;min-height:140px;font-size:13px;color:var(--t2);line-height:1.8;border:1px solid var(--accent);border-radius:var(--r);padding:8px 10px;font-family:var(--ff);resize:vertical;background:#fafbff';
+      ta.dataset.aptN=apt.n;
+      ta.dataset.temaNum=temaNum;
+      ta.oninput=()=>{apt.contenido=ta.value;};
+      el.replaceWith(ta);
+    } else {
+      // Save + switch back to rendered
+      const ta=card.querySelectorAll('textarea[data-tema-num="'+temaNum+'"]')?.[i];
+      if(ta){apt.contenido=ta.value;const div=document.createElement('div');div.className='scontent';div.innerHTML=renderMd(apt.contenido);ta.replaceWith(div);}
+    }
+  });
+  if(!on){
+    // Persist to IDB
+    if(currentHistId){
+      dbLoadAllAsigs().then(all=>{const saved=all.find(a=>a.id===currentHistId);if(saved){saved.data=generatedData;dbSaveAsig(saved);}});
+    }
+    log(`💾 Contenido del Tema ${temaNum} guardado.`,'ok');
+  }
+}
+
+// ═══ EXPORT QUIZ por tema (#5) ════════════════════════
+function expQuiz(temaNum){
+  if(!generatedData)return;
+  const tema=generatedData.temas.find(t=>t.numero===temaNum);
+  const testData=generatedData.tests[temaNum];
+  if(!tema||!testData){alert('No hay test generado para este tema.');return;}
+  const lang=generatedData.meta?.lang||'español';
+  let txt=`CUESTIONARIO DE AUTOEVALUACIÓN\n`;
+  txt+=`${'='.repeat(50)}\n`;
+  txt+=`Asignatura: ${generatedData.plan?.asignatura||''}\n`;
+  txt+=`Tema ${tema.numero}: ${tema.titulo}\n`;
+  txt+=`${'='.repeat(50)}\n\n`;
+  let qNum=1;
+  (testData.tests||[]).forEach(apt=>{
+    txt+=`── Apartado ${apt.apt_n}: ${apt.apt_titulo} ──\n\n`;
+    (apt.preguntas||[]).forEach(q=>{
+      txt+=`${qNum}. ${q.p||''}\n`;
+      (q.opts||[]).forEach(o=>{ txt+=`   ${o}\n`; });
+      txt+='\n';
+      qNum++;
+    });
+  });
+  txt+=`\n${'─'.repeat(50)}\nRESPUESTAS CORRECTAS\n${'─'.repeat(50)}\n`;
+  qNum=1;
+  (testData.tests||[]).forEach(apt=>{
+    (apt.preguntas||[]).forEach(q=>{
+      const letra=['A','B','C','D'][q.ok]||'?';
+      txt+=`${qNum}. ${letra} — ${q.exp||''}\n`;
+      qNum++;
+    });
+  });
+  dl(`Test_Tema${temaNum}_${(tema.titulo||'').replace(/\s+/g,'_').slice(0,30)}.txt`,txt,'text/plain');
+}
+
+// ═══ KATEX RENDER ═════════════════════════════════════
+function renderKatex(){
+  if(typeof renderMathInElement==='undefined')return;
+  const out=document.getElementById('outContent');if(!out)return;
+  renderMathInElement(out,{
+    delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],
+    throwOnError:false,
+    output:'html'
+  });
+}
+
+// ═══ SEARCH ═══════════════════════════════════════════
+let searchTimeout=null;
+function doSearch(q){
+  clearTimeout(searchTimeout);
+  searchTimeout=setTimeout(()=>_doSearch(q),250);
+}
+function _doSearch(q){
+  const cnt=document.getElementById('searchCount');
+  const clr=document.getElementById('searchClear');
+  // Remove old highlights
+  document.querySelectorAll('.highlight').forEach(el=>{el.replaceWith(el.textContent);});
+  if(!q||q.length<2){if(cnt)cnt.textContent='';if(clr)clr.style.display='none';return;}
+  if(clr)clr.style.display='';
+  let matches=0;
+  const regex=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+  document.querySelectorAll('.scontent p,.stitle,.tema-title').forEach(el=>{
+    const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+    const nodes=[];let node;
+    while((node=walker.nextNode()))nodes.push(node);
+    nodes.forEach(n=>{
+      if(!n.textContent.match(regex))return;
+      const span=document.createElement('span');
+      span.innerHTML=n.textContent.replace(regex,'<mark class="highlight">$1</mark>');
+      matches+=span.querySelectorAll('.highlight').length;
+      n.parentNode.replaceChild(span,n);
+    });
+  });
+  if(cnt)cnt.textContent=matches?matches+' resultados':'Sin resultados';
+  // Scroll to first
+  const first=document.querySelector('.highlight');
+  if(first)first.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function clearSearch(){document.getElementById('searchInp').value='';_doSearch('');}
+
+// ═══ TOGGLE ═══════════════════════════════════════════
+function tog(id){const b=document.getElementById(id),c=document.getElementById('chev-'+id);if(!b)return;const o=b.classList.toggle('open');if(c){c.textContent=o?'▼':'▶';c.classList.toggle('open',o);}}
+function ansQ(qid,sel,ok,expId){[0,1,2,3].forEach(i=>{const b=document.getElementById(qid+'_'+i);if(!b||b.classList.contains('revealed'))return;b.classList.add('revealed');if(i===ok)b.classList.add('correct');else if(i===sel)b.classList.add('wrong');});const e=document.getElementById(expId);if(e)e.style.display='block';}
+
+// ═══ MARKDOWN SIMPLE ══════════════════════════════════
+function renderMd(t){if(!t)return'';return'<p>'+t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')+'</p>';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ═══ SVG MAPA ═════════════════════════════════════════
+function buildMapaSVG(m){
+  const nodes=m.nodos||[],edges=m.aristas||[];if(!nodes.length)return'<p style="font-size:12px;color:var(--t3)">No disponible</p>';
+  const W=660,H=290,cx=W/2,cy=H/2;const pos={};
+  const central=nodes.filter(n=>n.tipo==='central'),prim=nodes.filter(n=>n.tipo==='primario'),sec=nodes.filter(n=>n.tipo==='secundario'),other=nodes.filter(n=>!['central','primario','secundario'].includes(n.tipo));
+  if(central[0])pos[central[0].id]={x:cx,y:cy};
+  prim.forEach((n,i)=>{const a=2*Math.PI*i/prim.length-Math.PI/2;pos[n.id]={x:cx+110*Math.cos(a),y:cy+90*Math.sin(a)};});
+  sec.forEach((n,i)=>{const a=2*Math.PI*i/sec.length-Math.PI/2;pos[n.id]={x:cx+205*Math.cos(a),y:cy+162*Math.sin(a)};});
+  other.forEach((n,i)=>{const a=2*Math.PI*i/Math.max(other.length,1);pos[n.id]={x:cx+170*Math.cos(a),y:cy+130*Math.sin(a)};});
+  const edSVG=edges.map(e=>{const p1=pos[e.de],p2=pos[e.a];if(!p1||!p2)return'';const mx=(p1.x+p2.x)/2,my=(p1.y+p2.y)/2-9;return`<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="#c4b5fd" stroke-width="1.5" opacity=".7"/><text x="${mx}" y="${my}" fill="#a78bfa" font-size="9" text-anchor="middle" font-family="DM Sans,sans-serif">${esc(e.lbl||'')}</text>`;}).join('');
+  const ndSVG=nodes.map(n=>{const p=pos[n.id];if(!p)return'';const ic=n.tipo==='central',ip=n.tipo==='primario';const rx=ic?48:ip?40:34,ry=ic?20:ip?16:14;const fill=ic?'#4f46e5':ip?'#7c3aed':'#a78bfa',stroke=ic?'#3730a3':ip?'#6d28d9':'#8b5cf6';const label=(n.label||'').slice(0,24);const lines=wrapT(label,ic?14:11),lh=ic?12:11;const sy=p.y-((lines.length-1)*lh)/2;const tl=lines.map((l,i)=>`<tspan x="${p.x}" dy="${i===0?sy-p.y:lh}">${esc(l)}</tspan>`).join('');return`<ellipse cx="${p.x}" cy="${p.y}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/><text x="${p.x}" y="${p.y}" fill="white" font-size="${ic?11:ip?10:9}" font-weight="${ic?'bold':'500'}" text-anchor="middle" dominant-baseline="central" font-family="DM Sans,sans-serif">${tl}</text>`;}).join('');
+  return`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:290px;background:#faf5ff;border-radius:8px">${edSVG}${ndSVG}</svg>`;
+}
+function wrapT(t,max){if(t.length<=max)return[t];const w=t.split(' ');const l=[];let c='';w.forEach(x=>{if((c+' '+x).trim().length>max){l.push(c.trim());c=x;}else c=(c+' '+x).trim();});if(c)l.push(c);return l;}
+
+// ═══ STORAGE UI ═══════════════════════════════════════
+async function updateStorageUI(){
+  try{
+    const mb=await dbSizeMB();
+    const el=document.getElementById('storTotal');if(el)el.textContent=mb+' MB usados';
+    const elF=document.getElementById('storFiles');
+    if(elF){elF.textContent=files.length>0?files.length+' fichero'+(files.length>1?'s':''):'—';elF.style.color=files.length>0?'var(--teal)':'var(--t3)';}
+    const asigs=await dbLoadAllAsigs();
+    const elA=document.getElementById('storAsigs');
+    if(elA){elA.textContent=asigs.length>0?asigs.length+' guardada'+(asigs.length>1?'s':''):'—';elA.style.color=asigs.length>0?'var(--teal)':'var(--t3)';}
+  }catch(e){console.warn('storageUI:',e);}
+}
+async function clearAllData(){
+  if(!confirm('¿Borrar todos los ficheros, asignaturas e historial de IndexedDB?\n\nNo se puede deshacer.'))return;
+  await dbClearAll();
+  files=[];srcCache='';proposedPlan=null;topicSel=[];generatedData=null;currentHistId=null;
+  renderFiles();
+  document.getElementById('topicList').innerHTML='';
+  document.getElementById('topicLoading').style.display='block';
+  document.getElementById('topicReady').style.display='none';
+  document.getElementById('w4nav').style.display='none';
+  document.getElementById('outEmpty').style.display='block';
+  document.getElementById('outContent').style.display='none';
+  document.getElementById('outDot').style.display='none';
+  [1,2,3,4,5].forEach(i=>{const ws=document.getElementById('ws'+i);if(ws){ws.classList.remove('active','done');}});
+  document.getElementById('ws1').classList.add('active');
+  await refreshHistorial();
+  await updateStorageUI();
+  goW(1);showMain('wizard');
+  alert('✅ Todo borrado.');
+}
+
+// ═══ EXPORT ═══════════════════════════════════════════
+function expPDF(){
+  // Abre ventana de impresión del navegador (CSS @media print oculta sidebar/topbar)
+  window.print();
+}
+function expDOCX(){
+  // Genera DOCX usando la API docx (cargada dinámicamente)
+  const script=document.createElement('script');
+  script.src='https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js';
+  script.onload=()=>_buildDOCX();
+  script.onerror=()=>alert('Error cargando docx.js. Comprueba la conexión.');
+  document.head.appendChild(script);
+}
+function _buildDOCX(){
+  if(!generatedData){alert('No hay asignatura generada.');return;}
+  const {Document,Packer,Paragraph,TextRun,HeadingLevel,AlignmentType}=window.docx;
+  const d=generatedData;const p=d.plan;
+  const children=[];
+  const H=(text,level)=>new Paragraph({text,heading:level,spacing:{before:240,after:120}});
+  const P=(text)=>new Paragraph({children:[new TextRun({text,size:24})],spacing:{after:80}});
+  children.push(new Paragraph({children:[new TextRun({text:p.asignatura||'',bold:true,size:52,color:'1e3a8a'})],heading:HeadingLevel.TITLE,alignment:AlignmentType.CENTER,spacing:{after:200}}));
+  children.push(P(p.descripcion||''));
+  children.push(P(`Nivel: ${p.nivel||''} | Créditos teóricos: ${d.temas.length}h`));
+  if(d.guia){
+    children.push(H('Ficha Docente',HeadingLevel.HEADING_1));
+    children.push(P('Metodología: '+(d.guia.metodologia||'')));
+    children.push(P('Requisitos previos: '+(d.guia.requisitos||'')));
+    if(p.objetivos?.length){children.push(H('Objetivos',HeadingLevel.HEADING_2));p.objetivos.forEach(o=>children.push(P('• '+o)));}
+  }
+  d.temas.forEach(t=>{
+    children.push(H(`Tema ${t.numero}: ${t.titulo}`,HeadingLevel.HEADING_1));
+    if(t.descripcion)children.push(P(t.descripcion));
+    (t.apartados_d||[]).forEach(a=>{
+      children.push(H(`${t.numero}.${a.n} ${a.titulo}`,HeadingLevel.HEADING_2));
+      children.push(P(a.contenido||''));
+      (a.formulas||[]).filter(f=>f.latex).forEach(f=>children.push(P(`📐 ${f.desc}: ${f.latex}`)));
+      if(a.ejemplo)children.push(P('💡 Ejemplo: '+a.ejemplo));
+      const td=d.tests[t.numero];const at=(td?.tests||[]).find(x=>x.apt_n===a.n);
+      if(at){
+        children.push(new Paragraph({children:[new TextRun({text:'Test de autoevaluación',bold:true,size:22,color:'059669'})],spacing:{before:120,after:60}}));
+        (at.preguntas||[]).forEach((q,i)=>{
+          children.push(P(`${i+1}. ${q.p||''}`));
+          (q.opts||[]).forEach((o,oi)=>children.push(P(`  ${oi===q.ok?'✅':' '} ${o}`)));
+          children.push(P(`  → ${q.exp||''}`));
         });
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.error?.message || 'Error en la API');
-        }
-        const data = await response.json();
-        return data.choices[0].message.content.trim();
       }
-
-      // Generar un título de tema
-      async function generateTopicTitle(index, context) {
-        const messages = [
-          { role: 'system', content: 'Eres un profesor que crea títulos de temas educativos.' },
-          { role: 'user', content: `Propón un título atractivo para un tema de 1 hora de duración (índice ${index+1}). Contexto adicional: ${context}` }
-        ];
-        return await callOpenAI(messages);
-      }
-
-      // Generar apartados
-      async function generateSections(topicTitle, numSections, context) {
-        const messages = [
-          { role: 'system', content: 'Eres un diseñador instruccional.' },
-          { role: 'user', content: `Para el tema "${topicTitle}", propón exactamente ${numSections} títulos de apartados de 15-20 minutos cada uno. Devuelve una lista numerada. Contexto: ${context}` }
-        ];
-        const text = await callOpenAI(messages);
-        const lines = text.split('\n').filter(l => /^\d+[\.\)]\s/.test(l)).map(l => l.replace(/^\d+[\.\)]\s*/, ''));
-        return lines.slice(0, numSections);
-      }
-
-      // Generar contenido de un apartado
-      async function generateSectionContent(topicTitle, sectionTitle, context) {
-        const messages = [
-          { role: 'system', content: 'Eres un experto en la materia. Escribe contenido didáctico en Markdown, usando fórmulas LaTeX encerradas entre $ o $$.' },
-          { role: 'user', content: `Escribe el contenido para el apartado "${sectionTitle}" del tema "${topicTitle}". Incluye explicaciones, ejemplos y al menos 2 fórmulas LaTeX. Contexto: ${context}` }
-        ];
-        return await callOpenAI(messages);
-      }
-
-      // Generar preguntas test
-      async function generateQuestions(sectionContent, numQuestions) {
-        const messages = [
-          { role: 'system', content: 'Eres un evaluador. Genera preguntas tipo test con 4 opciones (A,B,C,D) y marca la correcta.' },
-          { role: 'user', content: `Basado en el siguiente contenido, genera ${numQuestions} preguntas tipo test. Formato:\n1. Pregunta\nA) ...\nB) ...\nC) ...\nD) ...\nCorrecta: letra\n\nContenido:\n${sectionContent}` }
-        ];
-        const text = await callOpenAI(messages);
-        // Parseo simple
-        const questions = [];
-        const blocks = text.split(/\n(?=\d+\. )/);
-        for (const block of blocks) {
-          const lines = block.split('\n').filter(l => l.trim());
-          if (lines.length < 6) continue;
-          const question = lines[0].replace(/^\d+\.\s*/, '');
-          const options = lines.slice(1, 5).map(l => l.replace(/^[A-D]\)\s*/, ''));
-          const correctLine = lines.find(l => /^Correcta:/i.test(l)) || '';
-          const correct = correctLine.replace(/^Correcta:\s*/i, '').trim();
-          questions.push({ question, options, correct });
-        }
-        return questions;
-      }
-
-      // Generar datos del mapa conceptual
-      async function generateConceptMap(topicTitle, sections) {
-        const messages = [
-          { role: 'system', content: 'Eres un experto en mapas conceptuales. Devuelve un JSON con formato node_tree para jsMind.' },
-          { role: 'user', content: `Crea un mapa conceptual para el tema "${topicTitle}" con los apartados: ${sections.join(', ')}. Formato JSON: { "meta": { "name": "Tema" }, "format": "node_tree", "data": { "id": "root", "topic": "Título", "children": [ { "id": "sec1", "topic": "Apartado1", "children": [...] } ] } }` }
-        ];
-        const text = await callOpenAI(messages);
-        // Extraer JSON
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('No se pudo parsear el mapa conceptual');
-        return JSON.parse(jsonMatch[0]);
-      }
-
-      // ------------------- Lógica principal -------------------
-      async function generate() {
-        state.apiKey = document.getElementById('apiKey').value.trim();
-        if (!state.apiKey) return alert('Introduce tu API Key de OpenAI.');
-
-        const numTopics = parseInt(document.getElementById('numTopics').value) || 2;
-        const numSections = parseInt(document.getElementById('numSections').value) || 3;
-        const numQuestions = parseInt(document.getElementById('numQuestions').value) || 2;
-
-        const fileList = document.getElementById('localFiles').files;
-        const localContext = fileList.length ? await readLocalFiles(fileList) : '';
-
-        showProgress(true);
-        updateProgress(0, 'Iniciando generación...');
-
-        state.topics = [];
-
-        for (let t = 0; t < numTopics; t++) {
-          const topicTitle = await generateTopicTitle(t, localContext);
-          const sectionTitles = await generateSections(topicTitle, numSections, localContext);
-
-          const sections = [];
-          for (let s = 0; s < sectionTitles.length; s++) {
-            const content = await generateSectionContent(topicTitle, sectionTitles[s], localContext);
-            const questions = numQuestions > 0 ? await generateQuestions(content, numQuestions) : [];
-            sections.push({ title: sectionTitles[s], content, questions });
-
-            const progress = Math.round(((t * sectionTitles.length + s + 1) / (numTopics * sectionTitles.length)) * 100);
-            updateProgress(progress, `Tema ${t+1}/${numTopics} – Apartado ${s+1}/${sectionTitles.length}`);
-          }
-
-          const conceptMapData = await generateConceptMap(topicTitle, sectionTitles);
-          state.topics.push({ title: topicTitle, sections, conceptMapData });
-        }
-
-        updateProgress(100, '¡Completado!');
-        setTimeout(() => { showProgress(false); renderResults(); }, 1500);
-      }
-
-      // ------------------- Renderizado de resultados -------------------
-      function renderResults() {
-        const tabs = document.getElementById('topicTabs');
-        const content = document.getElementById('topicContent');
-        tabs.innerHTML = '';
-        content.innerHTML = '';
-
-        state.topics.forEach((topic, idx) => {
-          // Tab
-          const tabId = `topic-${idx}`;
-          const li = document.createElement('li');
-          li.className = 'nav-item';
-          li.innerHTML = `<a class="nav-link ${idx===0?'active':''}" data-bs-toggle="tab" href="#${tabId}">${topic.title}</a>`;
-          tabs.appendChild(li);
-
-          // Panel
-          const pane = document.createElement('div');
-          pane.className = `tab-pane fade ${idx===0?'show active':''}`;
-          pane.id = tabId;
-
-          // Mapa conceptual
-          const mapDiv = document.createElement('div');
-          mapDiv.id = `concept-map-${idx}`;
-          mapDiv.style.width = '100%';
-          mapDiv.style.height = '400px';
-          pane.appendChild(mapDiv);
-
-          // Botón exportar notebook
-          const exportBtn = document.createElement('button');
-          exportBtn.className = 'btn btn-outline-secondary btn-sm my-2';
-          exportBtn.textContent = '📥 Descargar cuaderno Jupyter (.ipynb)';
-          exportBtn.onclick = () => downloadNotebook(idx);
-          pane.appendChild(exportBtn);
-
-          // Contenido notebook
-          topic.sections.forEach(section => {
-            // Celda markdown
-            const mdCell = createNotebookCell('markdown', section.content);
-            pane.appendChild(mdCell);
-
-            // Preguntas
-            if (section.questions.length) {
-              const qCell = document.createElement('div');
-              qCell.className = 'notebook-cell';
-              qCell.innerHTML = `<div class="cell-header">📝 Preguntas tipo test</div><div class="cell-body">`;
-              const qList = document.createElement('ol');
-              section.questions.forEach(q => {
-                const li = document.createElement('li');
-                li.innerHTML = `<strong>${q.question}</strong><br>${q.options.map((o,i) => `${String.fromCharCode(65+i)}) ${o}`).join('<br>')}<br><span class="text-success">✅ Correcta: ${q.correct}</span>`;
-                qList.appendChild(li);
-              });
-              qCell.querySelector('.cell-body').appendChild(qList);
-              pane.appendChild(qCell);
-            }
-          });
-
-          content.appendChild(pane);
-
-          // Inicializar jsMind después de que el panel sea visible
-          setTimeout(() => {
-            const jm = new jsMind({
-              container: mapDiv.id,
-              editable: false,
-              theme: 'primary'
-            });
-            jm.show(topic.conceptMapData);
-          }, 200);
-        });
-
-        // Refrescar MathJax
-        if (window.MathJax) {
-          MathJax.typesetPromise();
-        }
-
-        document.getElementById('resultsCard').classList.remove('d-none');
-      }
-
-      function createNotebookCell(type, source) {
-        const cell = document.createElement('div');
-        cell.className = 'notebook-cell';
-        const header = document.createElement('div');
-        header.className = 'cell-header';
-        header.innerHTML = `<span>${type === 'markdown' ? '📖 Markdown' : '💻 Código'}</span><span>🔽</span>`;
-        const body = document.createElement('div');
-        body.className = `cell-body ${type === 'markdown' ? 'markdown-body' : 'code-body'}`;
-        body.innerHTML = type === 'markdown' ? marked.parse(source) : source;
-        cell.appendChild(header);
-        cell.appendChild(body);
-        return cell;
-      }
-
-      // Descargar .ipynb
-      function downloadNotebook(topicIndex) {
-        const topic = state.topics[topicIndex];
-        const cells = [];
-
-        topic.sections.forEach(section => {
-          cells.push({
-            cell_type: 'markdown',
-            metadata: {},
-            source: section.content
-          });
-          if (section.questions.length) {
-            const qSource = section.questions.map((q,i) =>
-              `**${i+1}. ${q.question}**\n\n${q.options.map((o,j)=>`${String.fromCharCode(65+j)}. ${o}`).join('\n')}\n\n*Respuesta correcta: ${q.correct}*`
-            ).join('\n\n');
-            cells.push({
-              cell_type: 'markdown',
-              metadata: {},
-              source: qSource
-            });
-          }
-        });
-
-        const notebook = {
-          metadata: {
-            kernelspec: { display_name: "Python 3", language: "python", name: "python3" },
-            language_info: { name: "python", version: "3.8.0" }
-          },
-          nbformat: 4,
-          nbformat_minor: 5,
-          cells
-        };
-
-        const blob = new Blob([JSON.stringify(notebook, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${topic.title.replace(/\s+/g, '_')}.ipynb`;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-
-      // Evento generar
-      document.getElementById('generateBtn').addEventListener('click', generate);
-    })();
-  </script>
-  <!-- Marked para renderizar Markdown -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    });
+  });
+  if(d.bib){children.push(H('Bibliografía',HeadingLevel.HEADING_1));d.bib.split('\n').filter(Boolean).forEach(l=>children.push(P(l)));}
+  const doc=new Document({sections:[{properties:{},children}]});
+  Packer.toBlob(doc).then(blob=>{
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=(p.asignatura||'asignatura').replace(/\s+/g,'_')+'.docx';
+    a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  });
+}
+function expMd(){
+  if(!generatedData)return;
+  const d=generatedData,p=d.plan;
+  let md=`# ${p.asignatura}\n\n>${p.descripcion||''}\n\n**Nivel:** ${p.nivel||''}  \n**Créditos:** ${d.temas.length}h teóricas\n\n---\n\n`;
+  if(p.objetivos)md+=`## Objetivos\n${p.objetivos.map(o=>'- '+o).join('\n')}\n\n`;
+  d.temas.forEach(t=>{
+    md+=`## Tema ${t.numero}: ${t.titulo}\n\n${t.descripcion||''}\n\n`;
+    (t.apartados_d||[]).forEach(a=>{
+      md+=`### ${t.numero}.${a.n} ${a.titulo}\n\n${a.contenido||''}\n\n`;
+      (a.formulas||[]).filter(f=>f.latex).forEach(f=>{md+=`**${f.desc}:** $${f.latex}$\n\n`;});
+      if(a.ejemplo)md+=`> 💡 **Ejemplo:** ${a.ejemplo}\n\n`;
+      const td=d.tests[t.numero];const at=(td?.tests||[]).find(x=>x.apt_n===a.n);
+      if(at){md+=`#### Test\n\n`;(at.preguntas||[]).forEach((q,i)=>{md+=`**${i+1}. ${q.p||''}**\n`;(q.opts||[]).forEach((o,oi)=>{md+=`- ${oi===q.ok?'✅':' '} ${o}\n`;});md+=`\n*${q.exp}*\n\n`;});}
+    });
+  });
+  if(d.bib)md+=`## Bibliografía\n\n${d.bib}\n`;
+  dl((p.asignatura||'asig').replace(/\s+/g,'_')+'.md',md,'text/markdown');
+}
+function expJSON(){if(!generatedData)return;dl('asignatura.json',JSON.stringify(generatedData,null,2),'application/json');}
+function copyAll(){if(!generatedData)return;navigator.clipboard.writeText(document.getElementById('outContent').innerText).then(()=>{const b=event.target,o=b.textContent;b.textContent='✅ Copiado!';setTimeout(()=>b.textContent=o,1800);});}
+function dl(name,content,type){const b=new Blob([content],{type}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);}
+</script>
 </body>
 </html>
