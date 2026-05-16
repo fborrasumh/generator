@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js" onerror="console.warn('docx.js no disponible — export DOCX desactivado')"></script>
 <style>
 :root{
   --accent:#2563eb;--accent-dim:#1d4ed8;--accent-light:#eff6ff;
@@ -1428,7 +1429,9 @@ function renderStats(){
   const sr=document.getElementById('outStats');sr.style.display='grid';
   sr.innerHTML=`<div class="scard anim"><div class="sv">${d.temas.length}</div><div class="sl">Temas</div></div><div class="scard anim"><div class="sv">${nAp}</div><div class="sl">Apartados</div></div><div class="scard anim"><div class="sv">${nPr}</div><div class="sl">Preguntas</div></div><div class="scard anim"><div class="sv">${Object.keys(d.mapas||{}).length}</div><div class="sl">Mapas</div></div>`;
   document.getElementById('outExportRow').style.display='flex';
-  document.getElementById('outExportRow').innerHTML=`<button class="btn btn-success" onclick="expPDF()">🖨 PDF</button><button class="btn btn-success" onclick="expDOCX()">📄 DOCX</button><button class="btn" onclick="expMd()">⬇ Markdown</button><button class="btn" onclick="expJSON()">⬇ JSON</button><button class="btn" onclick="copyAll()">📋 Copiar</button>`;
+  document.getElementById('outExportRow').innerHTML=`<button class="btn btn-success" onclick="expPDF()">🖨 PDF</button><button class="btn btn-success" onclick="expDOCX()" id="btnDocx">📄 DOCX</button><button class="btn" onclick="expMd()">⬇ Markdown</button><button class="btn" onclick="expJSON()">⬇ JSON</button><button class="btn" onclick="copyAll()">📋 Copiar</button>`;
+  // Grey out DOCX button if library not available
+  if(!window.docx){const b=document.getElementById('btnDocx');if(b){b.disabled=true;b.title='docx.js no cargó — sin conexión o bloqueado';b.textContent='📄 DOCX (no disponible)';}}
   document.getElementById('searchBar').style.display='flex';
 }
 function renderGuia(){
@@ -1694,12 +1697,11 @@ function expPDF(){
   window.print();
 }
 function expDOCX(){
-  // Genera DOCX usando la API docx (cargada dinámicamente)
-  const script=document.createElement('script');
-  script.src='https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js';
-  script.onload=()=>_buildDOCX();
-  script.onerror=()=>alert('Error cargando docx.js. Comprueba la conexión.');
-  document.head.appendChild(script);
+  if(!window.docx){
+    alert('La librería docx.js no se cargó correctamente.\n\nPosibles causas:\n• Sin conexión a internet al abrir el fichero\n• Bloqueador de contenido activo\n\nUsa el export Markdown como alternativa.');
+    return;
+  }
+  _buildDOCX();
 }
 function _buildDOCX(){
   if(!generatedData){alert('No hay asignatura generada.');return;}
