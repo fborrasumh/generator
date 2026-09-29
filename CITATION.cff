@@ -1,6 +1,7 @@
 cff-version: 1.2.0
 message: "Si usas este software, cítalo con estos metadatos."
 title: "Generator"
+abstract: "Genera una asignatura completa a partir de los materiales del profesor: programa editable, ficha docente, desarrollo de cada tema con fórmulas y ejemplos, tests validados por código, mapas conceptuales y bibliografía real, con exportación a Word, Markdown y Moodle."
 type: software
 authors:
   - family-names: "Borrás Rocher"
@@ -8,8 +9,15 @@ authors:
     affiliation: "Universidad Miguel Hernández de Elche"
     orcid: "https://orcid.org/0000-0002-5519-4573"
 doi: "10.5281/zenodo.21423189"
-version: "1.0.0"
-date-released: "2026-07-18"
+version: "2.0.0"
+date-released: "2026-09-29"
 url: "https://fborrasumh.github.io/generator/"
 repository-code: "https://github.com/fborrasumh/generator"
 license: MIT
+keywords:
+  - "diseño curricular"
+  - "materiales docentes"
+  - "guía docente"
+  - "Moodle"
+  - "educación superior"
+  - "inteligencia artificial"
