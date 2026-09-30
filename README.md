@@ -14,6 +14,7 @@ Genera una **asignatura completa a partir de tus fuentes**: apuntes, transparenc
   - trabajos de OpenAlex con DOI, seleccionados por pertinencia.
 
   Las asignaturas antiguas avisan de que su bibliografía no está verificada.
+- **Cuadernos Jupyter (.ipynb) como fuente**: se usan las celdas de texto, el código y las salidas de texto; los gráficos se indican como «[gráfico]».
 - **PDF y Word se leen de verdad**: la versión 1 los leía como texto plano. Las fuentes ilegibles guardadas por la versión 1 se quitan con un aviso.
 - **Tests validados por código**: cuatro opciones distintas, una correcta que exista, sin «todas/ninguna de las anteriores». Se reparan o se descartan, se mezclan las opciones y se basan en el contenido completo del apartado.
 - **Contenido escapado**: el HTML que llegue en el texto generado no se ejecuta.
