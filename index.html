@@ -687,9 +687,9 @@ table.bp td.cell{padding:0;min-width:64px}
 <!-- ═════ 1 · FUENTES ═════ -->
 <section class="screen" data-step="1">
   <header class="sh" style="--c:#1F6FB2"><div class="sh-ico"><svg class="i"><use href="#i-folder"/></svg></div>
-    <div><p class="sh-step">Paso 1 de 5</p><h2>Tus fuentes</h2><p class="sh-lede">Apuntes, transparencias, capítulos o artículos. Cuanto mejores sean, mejor la asignatura: los agentes se basan en ellas. Se leen y se guardan en tu navegador.</p></div></header>
+    <div><p class="sh-step">Paso 1 de 5</p><h2>Tus fuentes</h2><p class="sh-lede">Apuntes, transparencias, cuadernos de prácticas, capítulos o artículos. Cuanto mejores sean, mejor la asignatura: los agentes se basan en ellas. Se leen y se guardan en tu navegador.</p></div></header>
   <div class="card">
-    <label class="drop" id="drop" tabindex="0"><svg class="i"><use href="#i-upload"/></svg><b>Arrastra aquí tus ficheros o pulsa para elegirlos</b><span>PDF, Word (.docx), Markdown, texto, HTML o CSV</span><input type="file" id="fileIn" multiple accept=".pdf,.docx,.txt,.md,.html,.htm,.csv,.json" hidden></label>
+    <label class="drop" id="drop" tabindex="0"><svg class="i"><use href="#i-upload"/></svg><b>Arrastra aquí tus ficheros o pulsa para elegirlos</b><span>PDF, Word (.docx), cuadernos Jupyter (.ipynb), Markdown, texto, HTML o CSV</span><input type="file" id="fileIn" multiple accept=".pdf,.docx,.ipynb,.txt,.md,.html,.htm,.csv,.json" hidden></label>
     <div id="files"></div>
     <details class="inacc" style="margin-top:10px"><summary><svg class="i"><use href="#i-pencil"/></svg><span>…o pega el texto</span><svg class="i chev"><use href="#i-down"/></svg></summary><textarea id="pegado" style="margin-top:10px;min-height:120px"></textarea><button class="btn btn-dark btn-sm" id="btnPegar" type="button" style="margin-top:8px">Añadir como fuente</button></details>
     <p class="sublab">¿Sin materiales a mano? Prueba con estos apuntes</p>
@@ -836,7 +836,27 @@ async function leeArchivo(f){
   if(ext === 'pdf'){ if(!window.pdfjsLib) await cargaLib(['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js']); pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; const pdf = await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise; let t = ''; for(let p = 1; p <= pdf.numPages; p++){ const c = await (await pdf.getPage(p)).getTextContent(); t += c.items.map(i => i.str).join(' ') + '\n\n'; } if(t.replace(/\s/g, '').length < 50) throw new Error('el PDF no tiene texto seleccionable (¿es un escaneo?)'); return t; }
   if(ext === 'docx'){ if(!window.mammoth) await cargaLib(['https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js']); return (await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value; }
   if(ext === 'doc') throw new Error('el formato .doc antiguo no se puede leer; guárdalo como .docx o PDF');
+  if(ext === 'ipynb') return leeCuaderno(await f.text());
   let t = await f.text(); if(/^html?$/.test(ext)) t = new DOMParser().parseFromString(t, 'text/html').body.innerText; return t;
+}
+/* cuadernos Jupyter: texto explicativo, código y salidas de texto; las imágenes y los HTML de las salidas se omiten */
+function leeCuaderno(raw){
+  let nb; try{ nb = JSON.parse(raw); }catch(e){ throw new Error('no es un cuaderno Jupyter válido'); }
+  const cells = nb.cells || (nb.worksheets || []).flatMap(w => w.cells || []);
+  if(!cells.length) throw new Error('el cuaderno no tiene celdas');
+  const lang = nb.metadata?.kernelspec?.language || nb.metadata?.language_info?.name || 'python';
+  const txt = v => Array.isArray(v) ? v.join('') : String(v || '');
+  const partes = cells.map(c => {
+    const s = txt(c.source || c.input).trim(); if(!s) return '';
+    if(c.cell_type === 'markdown') return s;
+    if(c.cell_type === 'code'){
+      const out = (c.outputs || []).map(o => o.output_type === 'stream' ? txt(o.text) : o.output_type === 'error' ? `${o.ename}: ${o.evalue}` : o.data && Object.keys(o.data).some(k => k.startsWith('image/')) ? '[gráfico]' : txt(o.data?.['text/plain'] || o.text)).filter(Boolean).join('\n').trim();
+      return '```' + lang + '\n' + s + '\n```' + (out ? '\nSalida:\n' + (out.length > 1500 ? out.slice(0, 1500) + ' […]' : out) : '');
+    }
+    return s;
+  }).filter(Boolean);
+  const nCod = cells.filter(c => c.cell_type === 'code').length;
+  return `[Cuaderno Jupyter · ${lang} · ${cells.length} celdas, ${nCod} de código]\n\n` + partes.join('\n\n');
 }
 async function anadeFuentes(fs){ for(const f of fs){ if(fuentes.some(x => x.name === f.name)) continue; try{ const t = (await leeArchivo(f)).trim(); if(!t) throw new Error('está vacío'); fuentes.push({name:f.name, size:t.length, text:t}); }catch(e){ toast(`${f.name}: ${e.message}`, 6000); } } srcCache = {}; pintaFuentes(); guardaFuentes(); }
 function pintaFuentes(){ $('files').innerHTML = fuentes.map((f,i) => `<div class="file">${ico('doc')}<b>${esc(f.name)}</b><small>${f.text.split(/\s+/).length.toLocaleString('es')} palabras</small><button class="iconbtn" type="button" data-x="${i}" aria-label="Quitar">${ico('trash')}</button></div>`).join(''); $$('#files [data-x]').forEach(b => b.onclick = () => { fuentes.splice(+b.dataset.x, 1); srcCache = {}; pintaFuentes(); guardaFuentes(); }); }
@@ -884,7 +904,7 @@ async function ia(sys, usr, max = 2500, json = true){
   throw new Error('OpenAI no responde ahora mismo.');
 }
 function log(m, c = ''){ const b = $('logbox'); const d = document.createElement('div'); d.className = c; d.textContent = new Date().toLocaleTimeString('es') + '  ' + m; b.appendChild(d); b.scrollTop = b.scrollHeight; }
-const REGLAS = () => `Idioma: ${$('lang').value}. Nivel: ${NIVEL[$('nivel').value]}. Basa el contenido en el MATERIAL cuando trate el tema y respeta su notación y su enfoque. No inventes datos, cifras, estudios, citas ni referencias bibliográficas; si añades algo que no está en el material, que sea conocimiento estándar de la disciplina.${$('instruc').value.trim() ? ' Indicaciones del profesor: ' + $('instruc').value.trim() : ''}`;
+const REGLAS = () => `Idioma: ${$('lang').value}. Nivel: ${NIVEL[$('nivel').value]}. Basa el contenido en el MATERIAL cuando trate el tema y respeta su notación y su enfoque. Si el material incluye código de cuadernos Jupyter, puedes usarlo en los ejemplos, con el mismo lenguaje y las mismas librerías. No inventes datos, cifras, estudios, citas ni referencias bibliográficas; si añades algo que no está en el material, que sea conocimiento estándar de la disciplina.${$('instruc').value.trim() ? ' Indicaciones del profesor: ' + $('instruc').value.trim() : ''}`;
 
 /* ══════════ PASO 3 · PROGRAMA ══════════ */
 async function proponer(){
@@ -1121,7 +1141,7 @@ function demo(){ G = JSON.parse(JSON.stringify(DEMO)); G._demo = true; plan = G.
 $('btnDemo').onclick = demo;
 
 /* ══════════ AYUDA Y ARRANQUE ══════════ */
-const GLOS = [['Fuentes','Tus apuntes, transparencias o artículos. Los agentes toman de ellas el contenido, la notación y el enfoque. Los PDF escaneados sin texto no se pueden leer.'],['Programa','Temas de una hora con sus apartados. Puedes desactivar temas, cambiar títulos y apartados, y probar con un solo tema antes de generarlos todos.'],['Tests comprobados','Cada pregunta se revisa con código: cuatro opciones distintas, una sola correcta que exista, sin «todas/ninguna de las anteriores». Si falla, se pide una versión corregida; si sigue mal, se descarta. Las opciones se mezclan para que la correcta no esté siempre en la A.'],['Bibliografía real','Solo dos orígenes: las referencias que aparecen citadas en tus fuentes (se comprueba que el autor y el año están en el texto) y trabajos de OpenAlex con DOI seleccionados por pertinencia. La IA no escribe referencias.'],['Ficha docente','La evaluación que propone es una sugerencia: ajústala a la normativa de tu centro.'],['Fórmulas','Se escriben en LaTeX y se muestran con KaTeX. En Word aparecen como código LaTeX.'],['Privacidad','Fuentes y asignaturas se guardan en IndexedDB de este navegador. El texto viaja a OpenAI; las búsquedas bibliográficas, a OpenAlex.']];
+const GLOS = [['Fuentes','Tus apuntes, transparencias, cuadernos Jupyter o artículos. Los agentes toman de ellas el contenido, la notación y el enfoque. Los PDF escaneados sin texto no se pueden leer.'],['Cuadernos Jupyter','De cada .ipynb se usan las celdas de texto, el código y las salidas de texto (recortadas si son muy largas). Las imágenes y los gráficos de las salidas se omiten.'],['Programa','Temas de una hora con sus apartados. Puedes desactivar temas, cambiar títulos y apartados, y probar con un solo tema antes de generarlos todos.'],['Tests comprobados','Cada pregunta se revisa con código: cuatro opciones distintas, una sola correcta que exista, sin «todas/ninguna de las anteriores». Si falla, se pide una versión corregida; si sigue mal, se descarta. Las opciones se mezclan para que la correcta no esté siempre en la A.'],['Bibliografía real','Solo dos orígenes: las referencias que aparecen citadas en tus fuentes (se comprueba que el autor y el año están en el texto) y trabajos de OpenAlex con DOI seleccionados por pertinencia. La IA no escribe referencias.'],['Ficha docente','La evaluación que propone es una sugerencia: ajústala a la normativa de tu centro.'],['Fórmulas','Se escriben en LaTeX y se muestran con KaTeX. En Word aparecen como código LaTeX.'],['Privacidad','Fuentes y asignaturas se guardan en IndexedDB de este navegador. El texto viaja a OpenAI; las búsquedas bibliográficas, a OpenAlex.']];
 $('glos').innerHTML = GLOS.map(g => `<div><b>${esc(g[0])}</b><span>${esc(g[1])}</span></div>`).join('');
 $('btnHelp').onclick = () => $('mHelp').classList.add('on');
 $$('.modal').forEach(m => m.addEventListener('click', e => { if(e.target === m || e.target.hasAttribute('data-close')) m.classList.remove('on'); }));
